@@ -28,17 +28,19 @@
 
 <script type="text/javascript">
     RED.nodes.registerType('xslTransform', {
-        category: 'function',
+        category: 'xml',
         color: '#fdeea2',
         defaults: {
-            name: {value: ""},
+            name: {value: "xslTransform"},
             xsl: {value: ""}
         },
         inputs: 1,
-        outputs: 1,
+        outputs: 2,
         icon: "switch.png",
         align: 'left',
         paletteLabel: "xslTransform",
+        inputLabels: "xml",
+        outputLabels: ["transformed out","error"],
         label: function () {
             return (this.name || "transform xml");
         }
@@ -63,17 +65,18 @@
 
 <script type="text/javascript">
     RED.nodes.registerType('xslParse', {
-        category: 'function',
+        category: 'xml',
         color: '#fdeea2',
         defaults: {
-            name: {value: ""},
-            xsl: {value: ""}
+            name: {value: "xslParse"}
         },
         inputs: 1,
         outputs: 1,
         icon: "file.png",
         align: 'left',
         paletteLabel: "xslParse",
+        inputLabels: "xsl",
+        outputLabels: ["error"],
         label: function () {
             return (this.name || "xslParse xml");
         }
