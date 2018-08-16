@@ -33,14 +33,12 @@ module.exports = function (RED) {
             try {
                 var outXmlString = xsltProcess(xmlParse(msg.payload) , xslParseCache[msg.xsl]);
                 node.send([msg,null]);
-             } catch(err) {
-//	      node.send([null,{ _msgid: msg._msgid, payload: result }]);
-              node.error(err.message,msg);
-             }
-             this.status({fill:"green",shape:"ring",text:"processed "++cnt));
-            });
-
-      });                
+            } catch(err) {
+//	        node.send([null,{ _msgid: msg._msgid, payload: result }]);
+                node.error(err.message,msg);
+            }
+            this.status({fill:"green",shape:"ring",text:"processed "++cnt));
+        });
     }
     RED.nodes.registerType("xslTransform", xslTransform);
  
@@ -57,11 +55,11 @@ module.exports = function (RED) {
         node.on("input", function(msg) {
             try {
 	        xslParseCache[msg.xsl]=xmlParse(msg.payload);
-             } catch(err) {
+            } catch(err) {
                 node.error(err.message,msg);
-             }
-          this.status({fill:"green",shape:"ring",text:"processed "++cnt));
-      });                
+            }
+            this.status({fill:"green",shape:"ring",text:"processed "++cnt));
+        });                
     }
     RED.nodes.registerType("xslParse", xslParse);
 
