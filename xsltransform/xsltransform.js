@@ -9,8 +9,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
-import {xsltProcess, xmlParse} from "node-red-contrib-harmony"
+var xsltProcess = require('xsltProcess');
+var xmlParse = require('xmlParse');
+// import {xsltProcess, xmlParse} from "xslt-processor"
 
 module.exports = function (RED) {
     var RED = require(process.env.NODE_RED_HOME+"/red/red");    
