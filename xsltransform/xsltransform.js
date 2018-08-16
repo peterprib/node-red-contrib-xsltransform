@@ -37,7 +37,7 @@ module.exports = function (RED) {
 //	        node.send([null,{ _msgid: msg._msgid, payload: result }]);
                 node.error(err.message,msg);
             }
-            this.status({fill:"green",shape:"ring",text:"processed "++cnt));
+            this.status({fill:"green",shape:"ring",text:"processed "++cnt});
         });
     }
     RED.nodes.registerType("xslTransform", xslTransform);
@@ -58,7 +58,7 @@ module.exports = function (RED) {
             } catch(err) {
                 node.error(err.message,msg);
             }
-            this.status({fill:"green",shape:"ring",text:"processed "++cnt));
+            this.status({fill:"green",shape:"ring",text:"processed "++cnt});
         });                
     }
     RED.nodes.registerType("xslParse", xslParse);
