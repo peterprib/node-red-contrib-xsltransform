@@ -1,3 +1,5 @@
+'use strict';
+
 /*
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -9,12 +11,12 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-var xsltProcess = require('xsltProcess');
-var xmlParse = require('xmlParse');
-// import {xsltProcess, xmlParse} from "xslt-processor"
+//var xsltProcess = require('xsltProcess');
+//var xmlParse = require('xmlParse');
+import {xsltProcess, xmlParse} from "xslt-processor";
 
 module.exports = function (RED) {
-    var RED = require(process.env.NODE_RED_HOME+"/red/red");    
+//    var RED = require(process.env.NODE_RED_HOME+"/red/red");    
 
     function xslTransform(config) {
         RED.nodes.createNode(this, config);
@@ -24,7 +26,7 @@ module.exports = function (RED) {
             node.error("xsl cache not defined specified");
         }
         this.name = config.name;
-	if(config.xsl==null} {
+	if(config.xsl==null) {
               node.error("no xsl specified");
         }
         
@@ -37,7 +39,7 @@ module.exports = function (RED) {
 //	        node.send([null,{ _msgid: msg._msgid, payload: result }]);
                 node.error(err.message,msg);
             }
-            this.status({fill:"green",shape:"ring",text:"processed "++cnt});
+            this.status({fill:"green",shape:"ring",text:"processed "+(++cnt)});
         });
     }
     RED.nodes.registerType("xslTransform", xslTransform);
@@ -58,9 +60,8 @@ module.exports = function (RED) {
             } catch(err) {
                 node.error(err.message,msg);
             }
-            this.status({fill:"green",shape:"ring",text:"processed "++cnt});
+            this.status({fill:"green",shape:"ring",text:"processed "+(++loadCnt)});
         });                
     }
     RED.nodes.registerType("xslParse", xslParse);
-
-}
+};
