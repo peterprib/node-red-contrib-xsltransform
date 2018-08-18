@@ -16,17 +16,19 @@
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
     <div class="form-row node-input-xsl">
-         <label for="node-input-filename"><i class="fa fa-file"></i>xsl</label>
-         <input type="text" id="node-input-xsd" placeholder="xsd">
+         <label for="node-input-xsl"><i class="fa fa-file"></i>xsl</label>
+         <input type="text" id="node-input-xsl" placeholder="xsl">
     </div>
 </script>
 
 <script type="text/x-red" data-help-name="xslTransform">
-    <p>This node transforms the content in msg.payload for a valid xml according the xsl provided.</p>
+    <p>This node transforms the content in msg.payload for a valid xml according to msg.xsl which may be a name in cache or xsl.
+    If msg.xsl missing then topic name used as name on xsl cache</p>
     <p>If transformed, the output is redirect to first output.</p>
 </script>
 
 <script type="text/javascript">
+    /*eslint-disable no-undef */
     RED.nodes.registerType('xslTransform', {
         category: 'xml',
         color: '#fdeea2',
@@ -36,13 +38,13 @@
         },
         inputs: 1,
         outputs: 2,
-        icon: "switch.png",
+        icon: "change.png",
         align: 'left',
         paletteLabel: "xslTransform",
         inputLabels: "xml",
         outputLabels: ["transformed out","error"],
         label: function () {
-            return (this.name || "transform xml");
+            return this.name || "transform xml";
         }
     });
 </script>
@@ -59,8 +61,8 @@
 </script>
 
 <script type="text/x-red" data-help-name="xslParse">
-    <p>This node transforms the content in msg.payload for a valid xml according the xsl provided.</p>
-    <p>If transformed, the output is redirect to first output.</p>
+    <p>This node loads the content in msg.payload as cached tylesheet named either as content of msg.xsl or if missing the topic</p>
+    <p>Output if there is an error.</p>
 </script>
 
 <script type="text/javascript">
@@ -78,7 +80,7 @@
         inputLabels: "xsl",
         outputLabels: ["error"],
         label: function () {
-            return (this.name || "xslParse xml");
+            return this.name || "xslParse xml";
         }
     });
 </script>
