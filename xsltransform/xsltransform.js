@@ -20,10 +20,10 @@ var libxmljs = libxslt.libxmljs;
 
 module.exports = function (RED) {
     function xslParse(config) {
-        RED.nodes.createNode(this, config);
-        this.name = config.name;
         var node = this, loadCnt=0, errCnt=0;
-		var xslParseCache = this.context().global.get('xslParseCache');
+        RED.nodes.createNode(node, config);
+        node.name = config.name;
+		var xslParseCache = node.context().global.get('xslParseCache');
 		if (!xslParseCache) {
 	       node.log("Establish xslparse cache");
            xslParseCache={};
@@ -32,7 +32,7 @@ module.exports = function (RED) {
 		       node.log("file: "+file);
        		});
 
-//  		    this.log("list xsl director: "+require('../xsl'));
+//  		    node.log("list xsl director: "+require('../xsl'));
 /*           
            
            require('fs').readdirSync(__dirname + '/').forEach(function(file) {
@@ -67,7 +67,7 @@ module.exports = function (RED) {
         node.on("input", function(msg) {
 			libxslt.parse(msg.payload, function(err, stylesheet){
 				if(err) {
-		   	        this.error("loaded "+msg.topic+ " Error: "+err);
+		   	        node.error("loaded "+msg.topic+ " Error: "+err);
 	                node.error(err.message,msg);
     	            errCnt++;
 				} else {
@@ -79,7 +79,7 @@ module.exports = function (RED) {
 
 	    	        } else {
 	    	        	xslParseCache[msg.topic]===stylesheet;
-						this.log("loaded "+msg.topic);
+						node.log("loaded "+msg.topic);
 		       	        loadCnt++;
     	        	}
 
@@ -91,8 +91,8 @@ module.exports = function (RED) {
     RED.nodes.registerType("xslParse", xslParse);
 
     function xslTransform(config) {
-        RED.nodes.createNode(this, config);
         var node = this, cnt=0, errCnt=0;
+        RED.nodes.createNode(node, config);
         node.name = config.name;
 
         if(config.xsl && config.xsl.startsWith("<")) {
@@ -106,10 +106,10 @@ module.exports = function (RED) {
   	        	}
 			});
         } else {
-   		    var xslParseCache = this.context().global.get('xslParseCache');
+   		    var xslParseCache = node.context().global.get('xslParseCache');
 		    if (!xslParseCache) {
-		       this.error("no parse cache");
-   	    	    this.status({fill:"red",shape:"ring",text:"xsl cache empty"});
+		       node.error("no parse cache");
+   	    	    node.status({fill:"red",shape:"ring",text:"xsl cache empty"});
             	node.error("xsl cache not defined specified");
         	}
         }
@@ -120,7 +120,7 @@ module.exports = function (RED) {
 				try {
 	            	stylesheet=xslParseCache(config.xsl||msg.xsl||msg.top);
 				} catch(e) {
-	            	this.status({fill:"yellow",shape:"ring",text:"processed "+(++cnt) + " errors: "+(++errCnt)});
+	            	node.status({fill:"yellow",shape:"ring",text:"processed "+(++cnt) + " errors: "+(++errCnt)});
             		node.error("processing "+(config.xsl||msg.xsl||msg.top)+" not found in cache",msg);
             		return;
             	}
@@ -130,7 +130,7 @@ module.exports = function (RED) {
     			// result is a string containing the result of the transformation
     			if(err) {
 		            node.status({fill:"yellow",shape:"ring",text:"processed "+(++cnt)+ " errors: "+(++errCnt)});
-    				node.error("processing "+xslId+" error: "+err);
+    				node.error("processing error: "+err);
                		errCnt++;
     			} else {
 	    			msg.payloadTransformed = result;
