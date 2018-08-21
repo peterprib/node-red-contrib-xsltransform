@@ -14,55 +14,44 @@
 //var xmlParse = require('xslt-processor').xmlParse;
 //import {xsltProcess, xmlParse} from "xslt-processor"
 
-var libxslt = require('libxslt');
-var libxmljs = libxslt.libxmljs;
-
+var libxslt = require('libxslt'),
+//	libxmljs = libxslt.libxmljs,
+	fs=require('fs'),
+	path=require('path'),
+	xslParseCache;
 
 module.exports = function (RED) {
     function xslParse(config) {
         var node = this, loadCnt=0, errCnt=0;
         RED.nodes.createNode(node, config);
         node.name = config.name;
-		var xslParseCache = node.context().global.get('xslParseCache');
+		xslParseCache = node.context().global.get('xslParseCache');
 		if (!xslParseCache) {
 	       node.log("Establish xslparse cache");
            xslParseCache={};
            node.context().global.set('xslParseCache',xslParseCache);
-           require('fs').readdirSync(__dirname + '/..').forEach(function(file) {
-		       node.log("file: "+file);
+           var directory=__dirname + '/../xsl';
+//			var pattern=new RegExp("^j.*\.xsl$","i")
+           fs.readdirSync(directory).forEach(function(file) {
+//				if(!pattern.test(file) return;
+				node.log("loading: "+file);
+				var name = file.replace('.xsl', '');
+				libxslt.parse(fs.readFileSync(path.join(directory, file), "utf8"), function(err, stylesheet){
+					if(err) {
+		   	        	node.error("loaded "+name+ " Error: "+err);
+    	            	errCnt++;
+					} else {
+    	        		xslParseCache[name]=stylesheet;
+	       	       		loadCnt++;
+			          	node.status({fill:"green",shape:"ring",text:"initially loaded: "+loadCnt+" errors: "+errCnt});
+					}
+
+				});
        		});
-
-//  		    node.log("list xsl director: "+require('../xsl'));
-/*           
-           
-           require('fs').readdirSync(__dirname + '/').forEach(function(file) {
-  				if (file.match(/\.xsl$/) !== null) {
-    				var name = file.replace('.xsl', '');
-    				xslParseCache[name] = require('./' + file);
-					libxslt.parse(require('./' + file), function(err, stylesheet){
-						if(err) {
-		   	        		this.error("loaded "+name+ " Error: "+err);
-    	            		errCnt++;
-						} else {
-	    		        if(stylesheet===null) {
-	    	    	    	if(xslParseCache.hasOwnProperty(name)) {
-	    	        			delete 	xslParseCache[name];
-	    	        			loadCnt--;
-    	        			}
-	    	        } else {
-	    	        	xslParseCache[name]===stylesheet;
-						this.log("loaded "+name);
-		       	        loadCnt++;
-    	        	}
-
-				}
-                node.status({fill:"green",shape:"ring",text:"loaded: "+loadCnt+" errors: "+errCnt});
-			});
-    				
-  				}
-			});
-*/
-           
+          	node.status({fill:"green",shape:"ring",text:"initially loaded: "+loadCnt+" errors: "+errCnt});
+        } else {
+        	loadCnt=Object.keys(xslParseCache).length;
+          	node.status({fill:"green",shape:"ring",text:"initially loaded: "+loadCnt+" errors: "+errCnt});
         }
         node.on("input", function(msg) {
 			libxslt.parse(msg.payload, function(err, stylesheet){
@@ -78,12 +67,13 @@ module.exports = function (RED) {
     	        		}
 
 	    	        } else {
-	    	        	xslParseCache[msg.topic]===stylesheet;
+	    	        	xslParseCache[msg.topic]=stylesheet;
 						node.log("loaded "+msg.topic);
 		       	        loadCnt++;
+       					node.log("xslParseCache "+Object.keys(xslParseCache));
     	        	}
-
 				}
+	           	node.context().global.set('xslParseCache',xslParseCache);
                 node.status({fill:"green",shape:"ring",text:"loaded: "+loadCnt+" errors: "+errCnt});
 			});
         });                
@@ -94,40 +84,41 @@ module.exports = function (RED) {
         var node = this, cnt=0, errCnt=0;
         RED.nodes.createNode(node, config);
         node.name = config.name;
+        node.status({fill:"green",shape:"ring",text:"processed "+(++cnt) + " errors: "+errCnt});
 
         if(config.xsl && config.xsl.startsWith("<")) {
 			libxslt.parse(config.xsl, function(err, stylesheet){
 				if(err) {
    	        		node.error("load inline xml error: "+err);
-              			node.status({fill:"red",shape:"ring",text:"FAILED check log"});
+              		node.status({fill:"red",shape:"ring",text:"FAILED check log"});
 				} else {
    	        		node.stylesheet=stylesheet;
 					node.log("loaded inline xml");
   	        	}
 			});
         } else {
-   		    var xslParseCache = node.context().global.get('xslParseCache');
+   		    xslParseCache = node.context().global.get('xslParseCache');
 		    if (!xslParseCache) {
-		       node.error("no parse cache");
+		    	node.error("no parse cache");
    	    	    node.status({fill:"red",shape:"ring",text:"xsl cache empty"});
-            	node.error("xsl cache not defined specified");
         	}
         }
-        
+      
         node.on("input", function(msg) {
-        	var params={},stylesheet=node.stylesheet;
-			if(!stylesheet) {
+        	var params=msg.params||config.params||{}
+        		,stylesheet=node.stylesheet||null;
+			if(stylesheet===null) {
+				var prop =config.xsl||msg.xsl||msg.topic;
 				try {
-	            	stylesheet=xslParseCache(config.xsl||msg.xsl||msg.top);
+					if(!xslParseCache.hasOwnProperty(prop)) throw Error("not in cache");
+	            	stylesheet=xslParseCache[prop];
 				} catch(e) {
 	            	node.status({fill:"yellow",shape:"ring",text:"processed "+(++cnt) + " errors: "+(++errCnt)});
-            		node.error("processing "+(config.xsl||msg.xsl||msg.top)+" not found in cache",msg);
+            		node.error("processing "+prop+" error: "+e,msg);
             		return;
             	}
 			}
         	stylesheet.apply(msg.payload, params, function(err, result){
-    			// err contains any error from parsing the document or applying the stylesheet
-    			// result is a string containing the result of the transformation
     			if(err) {
 		            node.status({fill:"yellow",shape:"ring",text:"processed "+(++cnt)+ " errors: "+(++errCnt)});
     				node.error("processing error: "+err);
