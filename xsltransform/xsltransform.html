@@ -10,55 +10,14 @@
   limitations under the License.
 -->
 
-<script type="text/x-red" data-template-name="xslTransform">
+<script type="text/x-red" data-template-name="xslParse">
     <div class="form-row">
-        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
-    <div class="form-row node-input-xsl">
-         <label for="node-input-xsl"><i class="fa fa-file"></i>xsl</label>
-         <input type="text" id="node-input-xsl" placeholder="xsl">
-    </div>
+    <div class="form-tips"><b>Tip:</b> This node is only required once as can handle many sources.</div>
 </script>
 
-<script type="text/x-red" data-help-name="xslTransform">
-    <p>This node transforms the content in msg.payload for a valid xml according to msg.xsl which may be a name in cache or xsl.
-    If msg.xsl missing then topic name used as name on xsl cache</p>
-    <p>If transformed, the output is redirect to first output.</p>
-</script>
-
-<script type="text/javascript">
-    /*eslint-disable no-undef */
-    RED.nodes.registerType('xslTransform', {
-        category: 'xml',
-        color: '#fdeea2',
-        defaults: {
-            name: {value: "xslTransform"},
-            xsl: {value: ""}
-        },
-        inputs: 1,
-        outputs: 2,
-        icon: "change.png",
-        align: 'left',
-        paletteLabel: "xslTransform",
-        inputLabels: "xml",
-        outputLabels: ["transformed out","error"],
-        label: function () {
-            return this.name || "transform xml";
-        }
-    });
-</script>
-
-<script type="text/x-red" data-template-name="xslTransform">
-    <div class="form-row">
-        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
-    </div>
-    <div class="form-row node-input-xsl">
-         <label for="node-input-filename"><i class="fa fa-file"></i>xsl</label>
-         <input type="text" id="node-input-xsd" placeholder="xsd">
-    </div>
-</script>
 
 <script type="text/x-red" data-help-name="xslParse">
     <p>This node loads the content in msg.payload as cached tylesheet named either as content of msg.xsl or if missing the topic</p>
@@ -66,6 +25,7 @@
 </script>
 
 <script type="text/javascript">
+    /*globals RED */
     RED.nodes.registerType('xslParse', {
         category: 'xml',
         color: '#fdeea2',
@@ -81,6 +41,107 @@
         outputLabels: ["error"],
         label: function () {
             return this.name || "xslParse xml";
+        }
+    });
+</script>
+
+
+
+<script type="text/x-red" data-template-name="xslTransform">
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row node-input-param">
+         <label for="node-input-param"><i class="fa fa-cog"></i> param</label>
+         <input type="text" id="node-input-param" placeholder="Param">
+    </div>
+    
+    <div class="form-row" style="position: relative; margin-bottom: 0px;">
+        <label for="node-input-xsl"><i class="fa fa-file-code-o"></i> XSL</label>
+        <input type="hidden" id="node-input-xsl" autofocus="autofocus">
+    </div>
+    
+    <div class="form-row node-text-editor-row">
+        <div style="height: 250px; min-height:150px;" class="node-text-editor" id="node-input-xsl-editor" ></div>
+    </div>
+
+
+</script>
+
+<script type="text/x-red" data-help-name="template">
+    <p>Sets a property based on the provided template.</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>msg <span class="property-type">payload</span></dt>
+        <dd>xml</dd>
+        <dt>msg <span class="property-type">topic</span></dt>
+        <dd>is xsl not specified used to determine xsl cached</dd>
+        <dt>msg <span class="property-type">xsl</span></dt>
+        <dd>if coded xsl coded to trasnlaste</dd>
+    </dl>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>msg <span class="property-type">pay;oad</span></dt>
+        <dd>a msg iwth payload containing the input payload translated bu XSL</dd>
+    </dl>
+    <h3>Details</h3>
+    <p>if XSL is emp</p>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('xslTransform',{
+        color:"rgb(243, 181, 103)",
+        category: 'function',
+        defaults: {
+            name: {value:""},
+            param: {value:"{}"},
+            xsl: {value:""},
+        },
+        inputs:1,
+        outputs:1,
+        icon: "swap.png",
+        label: function() {
+            return this.name||this._("template.template");
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        },
+        oneditprepare: function() {
+            var that = this;
+            this.editor = RED.editor.createEditor({
+                id: 'node-input-xsl-editor',
+                mode: 'ace/mode/XML',
+                value: $("#node-input-xsl").val()
+            });
+            RED.library.create({
+                url:"functions", // where to get the data from
+                type:"function", // the type of object the library is for
+                editor:that.editor, // the field name the main text body goes to
+                fields:['name','outputs']
+            });
+            this.editor.focus();
+        },
+        oneditsave: function() {
+            $("#node-input-xsl").val(this.editor.getValue());
+            this.editor.destroy();
+            delete this.editor;
+        },
+        oneditcancel: function() {
+            this.editor.destroy();
+            delete this.editor;
+        },
+        oneditresize: function(size) {
+            var rows = $("#dialog-form>div:not(.node-text-editor-row)");
+            var height = $("#dialog-form").height();
+            for (var i=0; i<rows.size(); i++) {
+                height -= $(rows[i]).outerHeight(true);
+            }
+            var editorRow = $("#dialog-form>div.node-text-editor-row");
+            height -= parseInt(editorRow.css("marginTop"), 10)+parseInt(editorRow.css("marginBottom"), 10);
+            $(".node-text-editor").css("height",height+"px");
+            this.editor.resize();
         }
     });
 </script>

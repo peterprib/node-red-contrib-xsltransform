@@ -1,0 +1,145 @@
+[
+    {
+        "id": "d5868481.df2b68",
+        "type": "tab",
+        "label": "xml tests",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "167526d6.1dcd09",
+        "type": "debug",
+        "z": "d5868481.df2b68",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "x": 670,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "7564f65d.a3b888",
+        "type": "inject",
+        "z": "d5868481.df2b68",
+        "name": "insert  formatxmlTest",
+        "topic": "formatxmlTest",
+        "payload": "<xsl:stylesheet version=\"1.0\"  xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">  <xsl:output omit-xml-declaration=\"yes\" indent=\"yes\"/>  <xsl:strip-space elements=\"*\"/>   <xsl:template match=\"node()|@*\">   <xsl:copy>    <xsl:apply-templates select=\"node()|@*\"/>   </xsl:copy>  </xsl:template> </xsl:stylesheet>",
+        "payloadType": "str",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 120,
+        "wires": [
+            [
+                "dde8ed26.f0c26",
+                "6b4eb37e.bb9c6c"
+            ]
+        ]
+    },
+    {
+        "id": "dde8ed26.f0c26",
+        "type": "xslParse",
+        "z": "d5868481.df2b68",
+        "name": "xslParse base",
+        "x": 440,
+        "y": 120,
+        "wires": [
+            [
+                "167526d6.1dcd09"
+            ]
+        ]
+    },
+    {
+        "id": "9a3c1230.7829c",
+        "type": "xslTransform",
+        "z": "d5868481.df2b68",
+        "name": "xslTransform",
+        "param": "",
+        "xsl": "<?xml version=\"1.0\"?>\n<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\n<xsl:output method=\"text\"/>\n\n<xsl:template match=\"/\">{\n    <xsl:apply-templates select=\"*\"/>}\n</xsl:template>\n\n<!-- Object or Element Property-->\n<xsl:template match=\"*\">\n    \"<xsl:value-of select=\"name()\"/>\" :<xsl:call-template name=\"Properties\">\n        <xsl:with-param name=\"parent\" select=\"'Yes'\"> </xsl:with-param>\n    </xsl:call-template>\n</xsl:template>\n\n<!-- Array Element -->\n<xsl:template match=\"*\" mode=\"ArrayElement\">\n    <xsl:call-template name=\"Properties\"/>\n</xsl:template>\n\n<!-- Object Properties -->\n<xsl:template name=\"Properties\">\n    <xsl:param name=\"parent\"></xsl:param>\n    <xsl:variable name=\"childName\" select=\"name(*[1])\"/>\n    <xsl:choose>            \n        <xsl:when test=\"not(*|@*)\"><xsl:choose><xsl:when test=\"$parent='Yes'\"> <xsl:text>&quot;</xsl:text><xsl:value-of select=\".\"/><xsl:text>&quot;</xsl:text></xsl:when>\n                <xsl:otherwise>\"<xsl:value-of select=\"name()\"/>\":\"<xsl:value-of  select=\".\"/>\"</xsl:otherwise>\n            </xsl:choose>           \n        </xsl:when>                \n        <xsl:when test=\"count(*[name()=$childName]) > 1\">{ \"<xsl:value-of  select=\"$childName\"/>\" :[<xsl:apply-templates select=\"*\" mode=\"ArrayElement\"/>] }</xsl:when>\n        <xsl:otherwise>{\n            <xsl:apply-templates select=\"@*\"/>\n            <xsl:apply-templates select=\"*\"/>\n            }</xsl:otherwise>\n    </xsl:choose>\n    <xsl:if test=\"following-sibling::*\">,</xsl:if>\n</xsl:template>\n\n<!-- Attribute Property -->\n<xsl:template match=\"@*\">\"<xsl:value-of select=\"name()\"/>\" : \"<xsl:value-of select=\".\"/>\",\n</xsl:template>\n</xsl:stylesheet>",
+        "x": 430,
+        "y": 200,
+        "wires": [
+            [
+                "167526d6.1dcd09"
+            ]
+        ]
+    },
+    {
+        "id": "35c2866e.1b192a",
+        "type": "inject",
+        "z": "d5868481.df2b68",
+        "name": "topic \"formatxmTest\" ",
+        "topic": "formatxmlTest",
+        "payload": "<a><b>a test</b></a>",
+        "payloadType": "str",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 130,
+        "y": 200,
+        "wires": [
+            [
+                "9a3c1230.7829c"
+            ]
+        ]
+    },
+    {
+        "id": "4469942f.8c565c",
+        "type": "inject",
+        "z": "d5868481.df2b68",
+        "name": "topic formatxml",
+        "topic": "formatxml",
+        "payload": "<a><b>a test</b></a>",
+        "payloadType": "str",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 120,
+        "y": 260,
+        "wires": [
+            [
+                "9a3c1230.7829c",
+                "628952c4.11424c"
+            ]
+        ]
+    },
+    {
+        "id": "628952c4.11424c",
+        "type": "xslTransform",
+        "z": "d5868481.df2b68",
+        "name": "xslTransform",
+        "param": "",
+        "xsl": "",
+        "x": 430,
+        "y": 260,
+        "wires": [
+            [
+                "167526d6.1dcd09"
+            ]
+        ],
+        "icon": "node-red/split.png"
+    },
+    {
+        "id": "6b4eb37e.bb9c6c",
+        "type": "xml",
+        "z": "d5868481.df2b68",
+        "name": "",
+        "property": "payload",
+        "attr": "",
+        "chr": "",
+        "x": 410,
+        "y": 60,
+        "wires": [
+            [
+                "167526d6.1dcd09"
+            ]
+        ]
+    }
+]

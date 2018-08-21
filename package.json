@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-xsltransform",
-  "version": "0.1.5",
+  "version": "0.2.1",
   "description": "Node-RED node node to tranform xml content using xslt-processor.",
   "main": "xsltransform.js",
   "dependencies": {
