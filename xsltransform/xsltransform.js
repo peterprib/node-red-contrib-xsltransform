@@ -105,7 +105,7 @@ module.exports = function (RED) {
         }
       
         node.on("input", function(msg) {
-        	var params=msg.params||config.params||{}
+        	var param=msg.param||config.param
         		,stylesheet=node.stylesheet||null;
 			if(stylesheet===null) {
 				var prop =config.xsl||msg.xsl||msg.topic;
@@ -118,18 +118,24 @@ module.exports = function (RED) {
             		return;
             	}
 			}
-        	stylesheet.apply(msg.payload, params, function(err, result){
-    			if(err) {
-		            node.status({fill:"yellow",shape:"ring",text:"processed "+(++cnt)+ " errors: "+(++errCnt)});
-    				node.error("processing error: "+err);
-               		errCnt++;
-    			} else {
-	    			msg.payload = result;
-		            node.status({fill:"green",shape:"ring",text:"processed "+(++cnt) + " errors: "+errCnt});
-					node.send(msg);
-    			}
-
-  			});  
+			try {
+				if(param) param=JSON.parse(param)
+    	    	stylesheet.apply(msg.payload, param, function(err, result){
+	    			if(err) {
+			            node.status({fill:"yellow",shape:"ring",text:"processed "+(++cnt)+ " errors: "+(++errCnt)});
+    					node.error("processing error: "+err);
+               			errCnt++;
+    				} else {
+	    				msg.payload = result;
+		            	node.status({fill:"green",shape:"ring",text:"processed "+(++cnt) + " errors: "+errCnt});
+						node.send(msg);
+    				}
+ 	 			});  
+			} catch(e) {
+	            	node.status({fill:"yellow",shape:"ring",text:"processed "+(++cnt) + " errors: "+(++errCnt)});
+            		node.error("processing "+(prop||"inline")+" error: "+e,msg);
+            		return;
+           	}
         });
     }
     RED.nodes.registerType("xslTransform", xslTransform);
