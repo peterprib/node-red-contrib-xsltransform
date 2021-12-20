@@ -4,7 +4,8 @@
   "description": "Node-RED node node to tranform xml content using xslt-processor.",
   "main": "xsltransform.js",
   "dependencies": {
-    "libxslt": "https://github.com/alexdee2007/node-libxslt"
+    "libxslt": "https://github.com/alexdee2007/node-libxslt",
+    "@mapbox/node-pre-gyp": "*"
   },
   "devDependencies": {},
   "scripts": {
