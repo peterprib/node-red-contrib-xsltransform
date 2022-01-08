@@ -15,12 +15,13 @@
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
-    <div class="form-tips"><b>Tip:</b> This node is only required once as can handle many sources.</div>
+    <div class="form-tips">
+        <b>Tip:</b> This node is only required once as can handle many sources.
+    </div>
 </script>
 
-
 <script type="text/x-red" data-help-name="xslParse">
-    <p>This node loads the content in msg.payload as cached tylesheet named either as content of msg.xsl or if missing the topic</p>
+    <p>Loads the content in msg.payload as compiled stylesheet in cache with identifier as either content of msg.stylesheet or if missing the topic</p>
     <p>Output if there is an error.</p>
 </script>
 
@@ -45,49 +46,57 @@
     });
 </script>
 
-
-
 <script type="text/x-red" data-template-name="xslTransform">
 
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
+
     <div class="form-row node-input-param">
          <label for="node-input-param"><i class="fa fa-cog"></i> param</label>
          <input type="text" id="node-input-param" placeholder="Param">
     </div>
-    
-    <div class="form-row" style="position: relative; margin-bottom: 0px;">
-        <label for="node-input-xsl"><i class="fa fa-file-code-o"></i> XSL</label>
-        <input type="hidden" id="node-input-xsl" autofocus="autofocus">
-    </div>
-    
-    <div class="form-row node-text-editor-row">
-        <div style="height: 250px; min-height:150px;" class="node-text-editor" id="node-input-xsl-editor" ></div>
+        
+    <div class="form-row form-row-http-in-xslFile">
+		<label for="node-input-xslFile"><i class="fa fa-list-ul"></i> transformer </label>
+        <input type="text" id="node-input-xslFile">
+	</div>
+
+    <div id="form-row-http-in-xsl" style="display:none">
+        <div class="form-row" style="margin-bottom: 0px;">
+            <label for="" style="width: unset;" id="node-input-xsl-label"><i class="fa fa-edit"></i> XSL</label>
+        </div>
+        <div class="form-row node-text-editor-row">
+            <div style="height: 250px; min-height:150px;" class="node-text-editor" id="node-input-xsl-editor" >
+            </div>
+        </div>
     </div>
 
+    <div>
+    </div>
+    <div style="height: 250px; min-height:150px;" class="node-text-editor" id="node-input-example-editor"></div>
 
 </script>
 
-<script type="text/x-red" data-help-name="template">
-    <p>Sets a property based on the provided template.</p>
+<script type="text/x-red" data-help-name="xslTransform">
+    <p>Translates xml using xsl</p>
     <h3>Inputs</h3>
     <dl class="message-properties">
         <dt>msg <span class="property-type">payload</span></dt>
         <dd>xml</dd>
         <dt>msg <span class="property-type">topic</span></dt>
-        <dd>is xsl not specified used to determine xsl cached</dd>
+        <dd>if xsl or transformer not specified, content used to determine xsl in cache</dd>
         <dt>msg <span class="property-type">xsl</span></dt>
-        <dd>if coded xsl coded to trasnlaste</dd>
+        <dd>if coded xsl coded, used for transform</dd>
     </dl>
     <h3>Outputs</h3>
     <dl class="message-properties">
-        <dt>msg <span class="property-type">pay;oad</span></dt>
-        <dd>a msg iwth payload containing the input payload translated bu XSL</dd>
+        <dt>msg <span class="property-type">payload</span></dt>
+        <dd>a msg with payload containing the input payload translated by XSL</dd>
     </dl>
     <h3>Details</h3>
-    <p>if XSL is emp</p>
+    <p>if XSL is empty deletes from cache</p>
 </script>
 
 <script type="text/javascript">
@@ -97,6 +106,7 @@
         defaults: {
             name: {value:""},
             param: {value:"{}"},
+            xslFile: {value:""},
             xsl: {value:""},
         },
         inputs:1,
@@ -109,19 +119,58 @@
             return this.name?"node_label_italic":"";
         },
         oneditprepare: function() {
-            var that = this;
-            this.editor = RED.editor.createEditor({
+            const node=this;
+
+            $("#node-input-xslFile").typedInput({
+                types: [
+                    {
+                    value: "",
+                    options: [
+                        {value:"", label:"...inline"},
+                        {value:"formatxml", label:"format"},
+                        {value:"json2xml", label:"JSON to XML"},
+                        {value:"removerEmptyNodes", label:"Remove empty nodes"},
+                        {value:"removerEmptyNodesOrNewLineTextNodes", label:"Remove empty nodes and new lines"},
+                        {value:"stripNamespaces", label:"Remove namespaces"},
+                        {value:"xhtml2xslfo", label:"html to document"},
+                        {value:"xml2html", label:"xml to html"},
+                        {value:"xml2json", label:"xml to JSON"},
+                        {value:"xml2jsonBasic", label:"xml to JSON 1 to 1 form"},
+                        {value:"XSLTJSON", label:"XSLTJSON (param sets options)"},
+                        ]
+                    }
+                ]
+            });
+			$("#node-input-xslFile").change(function() {
+				const xslFile=$(this).val();
+                if(xslFile) {
+                    $("#form-row-http-in-xsl").hide();
+                } else {
+                    $("#form-row-http-in-xsl").show();
+                }
+            }).change();
+            node.editor=RED.editor.createEditor({
                 id: 'node-input-xsl-editor',
-                mode: 'ace/mode/XML',
-                value: $("#node-input-xsl").val()
+                mode: 'ace/mode/xml',
+                value: node.xsl
             });
-            RED.library.create({
-                url:"functions", // where to get the data from
-                type:"function", // the type of object the library is for
-                editor:that.editor, // the field name the main text body goes to
-                fields:['name','outputs']
-            });
-            this.editor.focus();
+
+            if(node.editor==null) console.error("failed to create editor")
+		    $("#node-input-xsl-label").click(function(e) {
+					e.preventDefault();
+                    const editor=node.editor
+					RED.editor.editJavaScript({
+						value: editor.getValue(),
+						width: "Infinity",
+						cursor: editor.getCursorPosition(),
+						mode: "ace/mode/xml",
+						complete: function(v,cursor) {
+							editor.setValue(v, -1);
+							editor.gotoLine(cursor.row+1,cursor.column,false);
+							setTimeout(()=>editor.focus(),300);
+						}
+					})
+				})	
         },
         oneditsave: function() {
             $("#node-input-xsl").val(this.editor.getValue());
@@ -141,7 +190,7 @@
             var editorRow = $("#dialog-form>div.node-text-editor-row");
             height -= parseInt(editorRow.css("marginTop"), 10)+parseInt(editorRow.css("marginBottom"), 10);
             $(".node-text-editor").css("height",height+"px");
-            this.editor.resize();
+            if(this.editor) this.editor.resize();
         }
     });
 </script>

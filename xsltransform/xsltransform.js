@@ -90,35 +90,32 @@ module.exports=function (RED) {
     RED.nodes.registerType("xslParse", xslParse);
 
     function xslTransform(config) {
-        var node=this, cnt=0, errCnt=0;
+        const node=this;
         RED.nodes.createNode(node, config);
-		Object.assign(node,config);
-        node.status({fill:"green",shape:"ring",text:"processed "+(++cnt) + " errors: "+errCnt});
-        if(node.xsl && node.xsl.startsWith("<")) {
-			try{
+		Object.assign(node,config,{errorCount:0});
+        node.status({fill:"yellow",shape:"ring",text:"preparing"});
+		try{
+			if(node.xslFile) {
+				buildCacheCommon(node);
+				node.stylesheet=getSEF(node,node.xslFile)
+			} else if(node.xsl && node.xsl.startsWith("<")) {
 				node.stylesheet=sef(node.xsl) 
 				node.log("loaded inline xml");
-				if(logger.active) logger.send({label:"config xsl loaded"});
-			} catch(ex){
-   	        	node.error("load inline xml error: "+err);
-              	node.status({fill:"red",shape:"ring",text:"FAILED check log"});
-			}
-        } else {
-			try{
+        	} else {
 				buildCacheCommon(node);
 				if(node.xsl) node.stylesheet=getSEF(node,node.xsl)
 				else loadCache(node);
-				node.status({fill:"green",shape:"ring",text:"ready"});
-			} catch(ex){
-				logger.sendErrorAndStackDump("failed build",ex)
-	            node.status({fill:"red",shape:"ring",text:"failed build "});
-				return
 			}
+		} catch(ex){
+			logger.sendErrorAndStackDump("failed build",ex)
+       	    node.status({fill:"red",shape:"ring",text:"failed build "+ex.message});
+			return;
 		}
+        node.status({fill:"green",shape:"ring",text:"ready"});
 
         node.on("input", function(msg) {
 			if(logger.active) logger.send({label:"input",msg:msg});
-        	const param=msg.param||node.param;
+        	let param=msg.param||node.param;
         	let xslName,stylesheet=node.stylesheet||null;
 			try {
 				if(stylesheet==null) {
@@ -127,14 +124,13 @@ module.exports=function (RED) {
 					stylesheet=getSEF(node,xslName);
 					if(!stylesheet) return;
 				}
-				if(param) param=JSON.parse(param)
-				msg.payload=transform(msg.payload,stylesheet,param)	
-				node.status({fill:"green",shape:"ring",text:"processed "+(++cnt) + " errors: "+errCnt});
+				if(param) param=JSON.parse(param);
+				msg.payload=transform(msg.payload,stylesheet,param);
 				node.send(msg);
 				if(logger.active) logger.send({label:"input sent",msg:msg});
 			} catch(ex) {
 				if(logger.active) logger.sendErrorAndStackDump("input error",ex);
-	            node.status({fill:"yellow",shape:"ring",text:"processed "+(++cnt) + " errors: "+(++errCnt)});
+	            node.status({fill:"yellow",shape:"ring",text:"errors: "+(++node.errorCount)});
             	node.error("processing "+(node.stylesheet?"inline":xslName)+" error: "+ex.message,msg);
            	}
         });
