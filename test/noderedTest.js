@@ -1,6 +1,5 @@
 'use strict';
-//const {assert}=require('console');
-const {expect}=require('chai');
+const assert = require('node:assert').strict;
 const fs=require('fs');
 const helper=require("node-red-node-test-helper");
 const transformNode = require("../xsltransform/xsltransform.js");
@@ -20,8 +19,8 @@ function test(label,node,dataFile,repeat=1){
 					const outHelperNode=helper.getNode(outHelper.id);
 					let c=repeat-1;
 					outHelperNode.on("input", function(msg) {
-						console.log("outHelper count:"+c+" topic:"+msg.topic);
-						if(c--) return;
+						console.log("outHelper count:"+c+" topic:"+msg.topic)
+						if(c-- >= 1 )return
 						console.log("outHelper payload:"+msg.payload);
 						done()
 					});
@@ -65,12 +64,11 @@ describe('transform', function() {
 		helper.load(transformNode, [nodeInline], function() {
 			try{
 				const n = helper.getNode(nodeInline.id);
-				expect(n).to.have.property('name', nodeInline.name);
-				expect(n).to.have.property('type', nodeInline.type);
-//				expect(n).to.have.property('param', nodeInline.param);
-				expect(n).to.have.property('xsl', nodeInline.xsl);
+				assert.equal(n.name, nodeInline.name)
+				assert.equal(n.type, nodeInline.type)
+				assert.equal(n.xsl, nodeInline.xsl)
 			} catch(ex) {
-				done(ex);
+				done(ex.mes);
 				return;
 			}
 			done()

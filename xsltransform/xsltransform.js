@@ -1,90 +1,51 @@
-const { get } = require("https");
-
-/*eslint-disable no-use-before-define */
 const logger=new (require("node-red-contrib-logger"))("xslTransform");
 logger.sendInfo("Copyright 2022 Jaroslav Peter Prib");
-
-const fs=require('fs'),
-	path=require('path'),
-	saxon=require('saxon-js'),
-	saxonPlatform=saxon.getPlatform(),
-	xslDirectory=__dirname + '/../xsl';
-let xslParseCache={};
-function sef(xsl){
-	const doc=saxonPlatform.parseXmlFromString(xsl);
-	doc._saxonBaseUri="file:///";
-	return saxon.compile(doc);
-}
-function transform(xml,xsl,params) {
-	const resultStringXML=saxon.transform({
-	  stylesheetInternal: xsl,
-	  sourceText: xml,
-	  destination: "serialized",
-	  stylesheetParams:params
-	});
-	return resultStringXML.principalResult
-}
-function buildCacheCommon(node){
-	xslParseCache=node.context().global.get('xslParseCache');
-	if(xslParseCache) return;
-	xslParseCache={};
-}
-function loadCache(node){
-	if(logger.active) logger.send({label:"loadCache"});
-	node.log("Load xslparse cache");
-	node.context().global.set('xslParseCache',xslParseCache);
-	fs.readdirSync(xslDirectory).forEach(function(file) {
-		getSEF(node,file.replace('.xsl', ''),true)
-	});
-}
-function getSEF(node,name,replace){
-	if(logger.active) logger.send({label:"getSEF",name:name});
-	if(xslParseCache.hasOwnProperty(name)){
-		return xslParseCache[name];
-	}
-	node.log("loading: "+name);
-	const xsl=fs.readFileSync(path.join(xslDirectory, name+".xsl"), "utf8");
-	try{
-		xslParseCache[name]=sef(xsl);
-	} catch(ex){
-		node.error("loaded "+name+ " Error: "+err);
-		node.status({fill:"red",shape:"ring",text:"failed to compile xsl"});
-	}
-	return xslParseCache[name]
+const SaxonEngine=require('../xsltransform/saxonEngine');
+const { error } = require("console");
+const saxonEngine=new SaxonEngine();
+const statusOK=function(){this.status({fill:"green",shape:"ring",text:"ready"})};
+const statusError=function(message){
+	this.log(message)
+	this.status({fill:"red",shape:"ring",text:"failed build "+message});
 }
 
+const statusxslParseError=function(message){
+	this.log(message)
+	errCnt++
+	this.status({fill:"yellow",shape:"ring",text:"loaded: "+loadCnt+" errors: "+errCnt});
+}
 module.exports=function (RED) {
     function xslParse(config) {
-        const node=this;
-		let loadCnt=0, errCnt=0;
-        RED.nodes.createNode(node, config);
-		Object.assign(node,config);
-		buildCacheCommon(node);
-        loadCnt=Object.keys(xslParseCache).length;
-        node.status({fill:"green",shape:"ring",text:"initially loaded: "+loadCnt});
+        const node=this
+		let loadCnt=0, errCnt=0
+        RED.nodes.createNode(node, config)
+		Object.assign(node,config)
+        node.status({fill:"green",shape:"ring",text:"initially loaded: "+loadCnt})
         node.on("input", function(msg) {
 			try{
-				stylesheet=sef(msg.payload);
-			} catch(ex) {
-				node.error("loaded "+msg.topic+ " Error: "+err);
-				node.error(err.message,msg);
-				errCnt++;
+				if(msg.topic==="@removeCache") {
+					SaxonEngine.removeCache(msg.topic,
+						()=>{
+							node.log("removed "+msg.payload);
+							loadCnt--;
+							node.status({fill:"green",shape:"ring",text:"loaded: "+loadCnt+" errors: "+errCnt});
+						},
+						statusxslParseError.bind(node)
+					)
+				} else saxonEngine.xsltToSEFForce(msg.topic,msg.payload,
+						()=>{
+							loadCnt++;
+							node.log("loaded "+msg.topic);
+							node.status({fill:"green",shape:"ring",text:"loaded: "+loadCnt+" errors: "+errCnt});
+						},
+						statusxslParseError.bind(node)
+					)
+			} catch (ex) {
+				node.error("loaded " + msg.topic + " Error: " + ex.message)
+				node.error(ex.message,msg)
+				errCnt++
 				node.status({fill:"yellow",shape:"ring",text:"loaded: "+loadCnt+" errors: "+errCnt});
-				return
 			} 
-			if(stylesheet===null) {
-				if(xslParseCache.hasOwnProperty(msg.topic)) {
-					delete 	xslParseCache[msg.topic];
-					loadCnt--;
-				}
-			} else {
-				xslParseCache[msg.topic]=stylesheet;
-				node.log("loaded "+msg.topic);
-				loadCnt++;
-				node.log("xslParseCache "+Object.keys(xslParseCache));
-			}
-			node.context().global.set('xslParseCache',xslParseCache);
-			node.status({fill:"green",shape:"ring",text:"loaded: "+loadCnt+" errors: "+errCnt});
         });                
     }
     RED.nodes.registerType("xslParse", xslParse);
@@ -96,38 +57,70 @@ module.exports=function (RED) {
         node.status({fill:"yellow",shape:"ring",text:"preparing"});
 		try{
 			if(node.xslFile) {
-				buildCacheCommon(node);
-				node.stylesheet=getSEF(node,node.xslFile)
+				node.stylesheet = saxonEngine.xsltFileNameToStylesheet(node.xslFile)
+				saxonEngine.xsltFileToSEF(node.xslFile,statusOK.bind(node),statusError.bind(node))
 			} else if(node.xsl && node.xsl.startsWith("<")) {
-				node.stylesheet=sef(node.xsl) 
-				node.log("loaded inline xml");
+				node.stylesheet=node.id
+				saxonEngine.xsltToSEFForce(node.stylesheet,node.xsl,statusOK.bind(node),statusError.bind(node))
         	} else {
-				buildCacheCommon(node);
-				if(node.xsl) node.stylesheet=getSEF(node,node.xsl)
-				else loadCache(node);
+				node.status({fill:"yellow",shape:"ring",text:"Deferred prepare"});
+				node.defferredPrepare=true
+				node.stylesheet=node.xsl
 			}
 		} catch(ex){
 			logger.sendErrorAndStackDump("failed build",ex)
        	    node.status({fill:"red",shape:"ring",text:"failed build "+ex.message});
 			return;
 		}
-        node.status({fill:"green",shape:"ring",text:"ready"});
-
         node.on("input", function(msg) {
-			if(logger.active) logger.send({label:"input",msg:msg});
+			if(logger.active) logger.send({label:"input",topic:msg.topic});
         	let param=msg.param||node.param;
-        	let xslName,stylesheet=node.stylesheet||null;
+        	let xslName,stylesheet;
 			try {
-				if(stylesheet==null) {
-					if(logger.active) logger.send({label:"input get stylesheet"});
-					xslName=node.xsl||msg.xsl||msg.topic
-					stylesheet=getSEF(node,xslName);
-					if(!stylesheet) return;
-				}
 				if(param) param=JSON.parse(param);
-				msg.payload=transform(msg.payload,stylesheet,param);
-				node.send(msg);
-				if(logger.active) logger.send({label:"input sent",msg:msg});
+				if(node.stylesheet) stylesheet=node.stylesheet
+				else if(msg.xsl && msg.xsl.startsWith("<")) {
+					xslName=node.id
+					saxonEngine.xsltToSEFForce(xslName,msg.xsl,
+						()=>{
+							msg.payload=saxonEngine.transform(msg.payload,xslName,param,
+								(data)=>{
+									node.send(msg);
+									if(logger.active) logger.send({label:"input sent"});
+								},
+								(errorMsg)=>{
+									if(logger.active) logger.sendErrorAndStackDump("input error",errorMsg);
+									node.status({fill:"yellow",shape:"ring",text:"errors: "+(++node.errorCount)});
+									node.error("processing inline xsl error: "+errorMsg,msg);
+								}
+							);
+						},
+						(errorMsg)=>{
+							if(logger.active) logger.sendErrorAndStackDump("input error",errorMsg);
+							node.status({fill:"yellow",shape:"ring",text:"errors: "+(++node.errorCount)});
+							node.error("processing inline xsl error: "+errorMsg,msg);
+						}
+					)
+				} else stylesheet = msg.xsl??msg.topic
+				if(stylesheet!==null) {
+					if(logger.active) logger.send({label:"input stylesheet: "+stylesheet});
+					saxonEngine.transform(msg.payload,stylesheet,param,
+						(data)=>{
+							if(node.defferredPrepare){
+								statusOK.call(node)
+								delete node.defferredPrepare
+							}
+							msg.payload=data
+							node.send(msg);
+							if(logger.active) logger.send({label:"input sent"});
+						},
+						(errorMsg)=>{
+							if(logger.active) logger.sendErrorAndStackDump("input error",errorMsg);
+							node.status({fill:"red",shape:"ring",text:"errors: "+(++node.errorCount)});
+							node.error("processing "+node.stylesheet+" error: "+errorMsg,msg);
+						}
+					);
+				}
 			} catch(ex) {
 				if(logger.active) logger.sendErrorAndStackDump("input error",ex);
 	            node.status({fill:"yellow",shape:"ring",text:"errors: "+(++node.errorCount)});

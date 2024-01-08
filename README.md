@@ -47,6 +47,8 @@ Test/example flow in  test/testflow.json
 
 ## Version
 
+0.5.0 rewrite for saxon.js compile method not available.  CHnaged caching to internal oblect 
+
 0.4.0 Add pulldown for supplied transforms 
 
 0.3.0 Big rewrite to use [saxon-js][2] as pure javascript and v3 of xslt
