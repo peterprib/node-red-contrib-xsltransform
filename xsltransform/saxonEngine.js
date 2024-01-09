@@ -6,8 +6,8 @@ const { access, constants, copyFile, readdir, readFile, rm, writeFile } = requir
 const errorFunctionBase = (reason)=>{throw Error(reason)}
 
 function saxonEngine(arg,debug) {
-    Object.assign(this,{cwd:"tmp",xslDir:path.join('.','xsl')},arg)
-    this.tmpDir=path.join('.',this.cwd)
+    Object.assign(this,{cwd:"tmp",xslDir:path.join(__dirname,"..",'xsl')},arg)
+    this.tmpDir=path.join(__dirname,"..",this.cwd)
     this.cache={}
     return this
 }
@@ -65,20 +65,22 @@ saxonEngine.prototype.generateAndGetSEF = function(stylesheet,done,errorFunction
         spawnCommand(command,
 //	    exec(command,
             {cwd:this.cwd}, (error, stdout, stderr) => {
+            _this.debug && _this.debug({label:"generateAndGetSEF",stylesheet:stylesheet,command:command
+                ,error:error,stdout:stdout, stderr:stderr})
 		    if (error) {
-                _this.debug && this.debug({label:"generateAndGetSEF",stylesheet:stylesheet,error:ex.message})
-                const ex=Error(error)
+                _this.debug && _this.debug({label:"generateAndGetSEF",stylesheet:stylesheet,error:error})
 			    errorFunction(error);
 			    return;
 	  	    }
-		    readFile(path.join(this.tmpDir,stylesheet+".sef"), (ex, data) => {
-                _this.debug && this.debug({label:"generateAndGetSEF readFile",stylesheet:stylesheet,error:(ex?ex.message:null)})
+		    readFile(path.join(_this.tmpDir,stylesheet+".sef"), (ex, data) => {
+                _this.debug && _this.debug({label:"generateAndGetSEF readFile",stylesheet:stylesheet,error:(ex?ex.message:null)})
 		    	if (ex) {
                     errorFunction(ex.message)
                  }  else done(data)
 		    })
         });
     }catch (ex) {
+        this.debug && this.debug({label:"generateAndGetSEF error",stylesheet:stylesheet,error:ex.message})
         errorFunction(ex.message)
     }
     return this

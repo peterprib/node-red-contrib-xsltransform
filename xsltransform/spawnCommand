@@ -2,23 +2,26 @@
 const spawn = require('cross-spawn');
 function spawnCommand(command,options,done) {
     try{
+//        console.log({label:"spawnCommand"})
         const child = spawn(command,options)
         let result = ""
         child.stdout.setEncoding('utf8');
         child.stdout.on('data', function(data) {
+//            console.log({label:"spawnCommand",onData:data})
              result+=data.toString();
         });
         child.stderr.setEncoding('utf8');
         child.stderr.on('data', function(data) {
-     //       console.log({error:data})
+//            console.log({label:"spawnCommand",onStderr:data})
             result+=data;
         });
         child.on('close', function(code) {
-//            console.log({code:code})
+            console.log({label:"spawnCommand",command:command,result:result,code:code})
             if(code==0) done(null, result,null)
             else done(result, null, result)
         });
     } catch(ex) {
+        console.log({label:"spawnCommand",command:command,error:ex.message})
         done(null, ex.message,null)
     }
 }

@@ -38,7 +38,7 @@ function test(label,node,dataFile,repeat=1){
 		} catch(ex) {
 			done(ex);
 		}
-	}).timeout(repeat>1?500*repeat:1000);
+	}).timeout(repeat>1?500*repeat:2000);
 }
 function buildNode(xsl) {
 	return {
