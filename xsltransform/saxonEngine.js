@@ -6,7 +6,7 @@ const { access, constants, copyFile, readdir, readFile, rm, writeFile } = requir
 const errorFunctionBase = (reason)=>{throw Error(reason)}
 
 function saxonEngine(arg,debug) {
-    this.baseDir = platform=="win32"? path.join(__dirname,"..") :__dirname
+    this.baseDir = platform=="win32"? path.join(__dirname,".."):path.join(__dirname,"..","..")
     Object.assign(this,{cwd:"tmp",xslDir:path.join(this.baseDir,'xsl')},arg)
     this.tmpDir=path.join(this.baseDir,this.cwd)
     this.cache={}
