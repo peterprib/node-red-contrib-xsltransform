@@ -76,5 +76,6 @@ describe('transform', function() {
 	});
 	test("inline",nodeInline,"values")
 	test("formatxml",buildNode("formatxml"),"values")
+	test("xml2jsonBasic",buildNode("xml2jsonBasic"),"values")
 	test("xml2jsonBasic",buildNode("xml2jsonBasic"),"values",100)
 });

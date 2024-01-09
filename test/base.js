@@ -2,34 +2,14 @@
 const assert=require('assert');
 const SaxonEngine=require('../xsltransform/saxonEngine')
 const saxonEngine=new SaxonEngine();
-const fs=require('fs');
 const path=require('path');
 const saxon = require('saxon-js')
-const saxonPlatform = saxon.getPlatform();
 const { exec } = require('node:child_process');
-const { readFile } = require('node:fs');
-
-function getSaxonSEF(stylesheet,done,errorFunction=(reason)=>{throw Error(reason)}) {
-	console.log({label:"xslt3",})
-	const command = "xslt3 -xsl:../xsl/"+stylesheet+".xsl -export:"+stylesheet+".sef -nogo -t"
-	const cwd= "tmp" //cwd=current working directory
-	exec(command,{cwd:cwd}, (error, stdout, stderr) => {
-		console.log("stdout:" + stdout)
-		console.error("stderr:",stderr)
-		 if (error) {
-			errorFunction(error);
-			return;
-	  	}
-		readFile(cwd+"/"+stylesheet+".sef", (err, data) => {
-			if (err) errorFunction(err)
-			else done(data)
-		});
-	});
-}
+const { access, constants, readdirSync, readFile, readFileSync, writeFileSync } = require('node:fs');
+const cwd= "tmp" //cwd=current working directory
 
 function transform(xml,sef,params) {
 	const resultStringXML = saxon.transform({
-//	  stylesheetInternal: xslObject,
 	  stylesheetText: sef,
 	  sourceText: xml,
 	  destination: "serialized",
@@ -41,19 +21,18 @@ function transform(xml,sef,params) {
 function test(xml,xsl){
 	const label=xml+"-"+xsl;
 	it(label, function(done) {
-		const xmlString=fs.readFileSync('./test/'+xml+'.xml', 'utf8');
-		saxonEngine.transform(
-			xmlString, //.startsWith("<")?xmlString:"<data>"+xmlString+"</data>",
-			xsl,
+		const file=path.join("test",xml+".xml")
+		const xmlString=readFileSync(file, 'utf8');
+		saxonEngine.transform(xmlString,xsl,
 			{},
 			(result)=>{
-				const resultFile="./test/results/"+label;
+				const resultFile="./test/results/"+label;path.join("test","results",label)
 				let expectedResult;
 				try{
-					expectedResult=fs.readFileSync(resultFile,'utf8');
+					expectedResult=readFileSync(resultFile,'utf8');
 				} catch(ex) {
 					console.log("*** creating new result file "+label)
-					fs.writeFileSync(resultFile,r)
+					writeFileSync(resultFile,r)
 					return;
 				}
 				assert.equal(result.replace(/\r\n/gm, "\n"),expectedResult.replace(/\r\n/gm, "\n"));
@@ -61,39 +40,49 @@ function test(xml,xsl){
 			},
 			done
 		)
-/*
-		saxonEngine.getSEF(xsl,
-//		getSaxonSEF(xsl,
-			(xslsef)=>{
-				const xmlString=fs.readFileSync('./test/'+xml+'.xml', 'utf8');
-				const r=transform(xmlString.startsWith("<")?xmlString:"<data>"+xmlString+"</data>",xslsef);
-				const resultFile="./test/results/"+label;
-				let expectedResult;
-				try{
-					expectedResult=fs.readFileSync(resultFile,'utf8');
-				} catch(ex) {
-					console.log("*** creating new result file "+label)
-					fs.writeFileSync(resultFile,r)
-					return;
-				}
-				assert.equal(r.replace(/\r\n/gm, "\n"),expectedResult.replace(/\r\n/gm, "\n"));
-				done()
-			},
-			done
-		)
-*/
 	});
 }
 
 describe("saxon", function() {
 	it("compile ", function(done) {
-		saxonEngine.getSEF("formatxml",()=>done())
+		saxonEngine.getSEF("formatxml",(sef)=>done(sef?null:"missing SEF output"))
 	});
-});
+	it("removeCache ", function(done) {
+		saxonEngine.removeCache("formatxml",done,done)
+	});
+	it("clearCache ", function(done) {
+//		saxonEngine.setDebug()
+		saxonEngine.clearCache(done,done)
+//		saxonEngine.setDebug()
+
+	});
+	it("compile inline", function(done) {
+		readFile(path.join('xsl','formatxml.xsl'), (err, data) => {
+			if (err) done(err)
+			else {
+				const SEFFile=path.join(cwd,'testInline.xslt')
+				saxonEngine.xslToSEFforce("testInline",data,
+					()=>access(SEFFile, constants.F_OK, (ex)=>done(ex?ex.message:null)),
+					done,
+				)
+				
+			}
+		})
+	});
+	it("compile inline fail" , function(done) {
+		saxonEngine.xslToSEFforce("testInlineRubbish","rublish xsl",
+			()=>done("sholud have failed"),
+			(err)=>{
+				console.log({label:"fail xsl",error:err})
+				done()
+			},
+		)
+	})
+})
 
 
 describe("xsltransform", function() {
-	fs.readdirSync('./xsl').forEach(function(file) {
+	readdirSync('./xsl').forEach(function(file) {
 		it("get SEF "+file, function(done) {
 			try{
 				saxonEngine.getSEF(path.parse(file).name,()=>done(),done)

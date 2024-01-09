@@ -1,8 +1,9 @@
 const logger=new (require("node-red-contrib-logger"))("xslTransform");
 logger.sendInfo("Copyright 2022 Jaroslav Peter Prib");
-const SaxonEngine=require('../xsltransform/saxonEngine');
+const SaxonEngine=require('../xsltransform/saxonEngine')
 const { error } = require("console");
 const saxonEngine=new SaxonEngine();
+saxonEngine.setDebug()
 const statusOK=function(){this.status({fill:"green",shape:"ring",text:"ready"})};
 const statusError=function(message){
 	this.log(message)
@@ -64,7 +65,7 @@ module.exports=function (RED) {
 				saxonEngine.xsltToSEFForce(node.stylesheet,node.xsl,statusOK.bind(node),statusError.bind(node))
         	} else {
 				node.status({fill:"yellow",shape:"ring",text:"Deferred prepare"});
-				node.defferredPrepare=true
+				node.deferredPrepare=true
 				node.stylesheet=node.xsl
 			}
 		} catch(ex){
@@ -89,14 +90,14 @@ module.exports=function (RED) {
 									if(logger.active) logger.send({label:"input sent"});
 								},
 								(errorMsg)=>{
-									if(logger.active) logger.sendErrorAndStackDump("input error",errorMsg);
+									if(logger.active) logger.sendErrorAndStackDump("input error transform "+ errorMsg);
 									node.status({fill:"yellow",shape:"ring",text:"errors: "+(++node.errorCount)});
 									node.error("processing inline xsl error: "+errorMsg,msg);
 								}
 							);
 						},
 						(errorMsg)=>{
-							if(logger.active) logger.sendErrorAndStackDump("input error",errorMsg);
+							if(logger.active) logger.sendErrorAndStackDump("input error xsltToSEFForce"+errorMsg);
 							node.status({fill:"yellow",shape:"ring",text:"errors: "+(++node.errorCount)});
 							node.error("processing inline xsl error: "+errorMsg,msg);
 						}
@@ -106,16 +107,16 @@ module.exports=function (RED) {
 					if(logger.active) logger.send({label:"input stylesheet: "+stylesheet});
 					saxonEngine.transform(msg.payload,stylesheet,param,
 						(data)=>{
-							if(node.defferredPrepare){
+							if(node.deferredPrepare){
 								statusOK.call(node)
-								delete node.defferredPrepare
+								delete node.deferredPrepare
 							}
 							msg.payload=data
 							node.send(msg);
 							if(logger.active) logger.send({label:"input sent"});
 						},
 						(errorMsg)=>{
-							if(logger.active) logger.sendErrorAndStackDump("input error",errorMsg);
+							if(logger.active) logger.sendErrorAndStackDump("input error transform inline "+errorMsg);
 							node.status({fill:"red",shape:"ring",text:"errors: "+(++node.errorCount)});
 							node.error("processing "+node.stylesheet+" error: "+errorMsg,msg);
 						}

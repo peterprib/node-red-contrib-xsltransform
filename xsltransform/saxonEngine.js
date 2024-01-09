@@ -1,49 +1,95 @@
 const path = require('path');
 const { transform } = require('saxon-js')
-const { exec } = require('node:child_process');
-const { access, constants, copyFile, readFile, rm, writeFile } = require('node:fs');
+//const { execFile } = require('node:child_process');
+const spawnCommand=require('./spawnCommand')
+const { access, constants, copyFile, readdir, readFile, rm, writeFile } = require('node:fs');
 const errorFunctionBase = (reason)=>{throw Error(reason)}
 
 function saxonEngine(arg,debug) {
-    Object.assign(this,{cwd:"tmp",xslDir:"./xsl"},arg)
+    Object.assign(this,{cwd:"tmp",xslDir:path.join('.','xsl')},arg)
+//    this.tmpDir=path.join('.',this.cwd)
     this.cache={}
+    return this
 }
-saxonEngine.prototype.clearCache = function(){
+saxonEngine.prototype.clearCache = function(done,errorFunction=errorFunctionBase){
+    const _this=this
     this.cache={}
+	readdir(this.cwd,(err,files)=>{
+        _this.debug&&_this.debug({label:"clearCache",error:err,files:files})
+        let fileCount=files.length,errors=[]
+        files.forEach(fileName=>{
+            const file=path.join(_this.cwd,fileName)
+            rm(file,ex=>{
+                _this.debug&&_this.debug({label:"clearCache rm ",file:file,error:ex?ex.message:null})
+                if(ex) {
+                    errors.push(ex.message)
+                }
+                if(--fileCount) return
+                done && done(errors.length?errors.join():undefined)
+            });
+        })
+	});
+    return this
 }
 saxonEngine.prototype.removeCache = function(stylesheet,done,errorFunction=errorFunctionBase){
+    this.debug && this.debug({label:"removeCache",stylesheet:stylesheet})
     delete this.cache[stylesheet]
     const xslFile=path.join(this.cwd,stylesheet+".xslt")
-    rm(xslFile,(errXsl)=>{
+    rm(xslFile,(exXsl)=>{
         const selFile=path.join(this.cwd,stylesheet+".sef")
-        rm(xslFile,(errSef)=>{
-            if(errXsl || errSef ) errorFunction(errXsl +" "+errSef)
+        rm(xslFile,(exSEF)=>{
+            if((exXsl && exXsl.code !=="ENOENT") || (exSEF && exSEF.code!=="ENOENT")) errorFunction(exXsl?exXsl.message:"" + exSEF?" "+ exSEF.message:"")
             else done()
         });
     });
+    return this
 }
 saxonEngine.prototype.getSEF = function(stylesheet,done,errorFunction=errorFunctionBase){
     const _this=this
     const xslFile=path.join(this.cwd,stylesheet+".xslt")
-    copyFile(path.join(_this.xslDir,stylesheet+".xsl"),xslFile, constants.COPYFILE_EXCL,(err)=>{
-        this.debug && this.debug({label:"getSEF copyfile",error:err}) 
-        this.generateAndGetSEF(stylesheet,done,errorFunction)
-    })
+    copyFile(path.join(_this.xslDir,stylesheet+".xsl"),xslFile, // constants.COPYFILE_EXCL,
+        (ex)=>{
+            this.debug && this.debug({label:"getSEF copyfile",error:err})
+            if(ex /*&& ex.code!=='EEXIST'*/) errorFunction(ex.message)
+            else _this.generateAndGetSEF(stylesheet,done,errorFunction)
+        }
+    )
+    return this
 }
-saxonEngine.prototype.generateAndGetSEF = function(stylesheet,done,errorFunction=errorFunctionBase){
+saxonEngine.prototype.generateAndGetSEF = function(stylesheet,done,errorFunction){
+    this.debug && this.debug({label:"generateAndGetSEF",stylesheet:stylesheet})
     const _this=this
-   	const command = "npx xslt3 -xsl:"+stylesheet+".xslt -export:"+stylesheet+".sef -nogo -t"
-	exec(command,{cwd:this.cwd}, (error, stdout, stderr) => {
-		this.debug && this.debug({label:"getSEF exec",stdout:stdout,stderr:stderr})
-		if (error) {
-			errorFunction(error);
-			return;
-	  	}
-		readFile(path.join(this.cwd,stylesheet+".sef"), (err, data) => {
-			if (err) errorFunction(err)
-			else done(data)
-		});
-	});
+   	const command = "xslt3 -xsl:"+stylesheet+".xslt -export:"+stylesheet+".sef -nogo -t"
+    if(!errorFunction) throw Error("generateAndGetSEF no error call back")
+    try{
+        spawnCommand(command,
+//	    exec(command,
+            {cwd:this.cwd}, (error, stdout, stderr) => {
+		    if (error) {
+                _this.debug && this.debug({label:"generateAndGetSEF",stylesheet:stylesheet,error:ex.message})
+                const ex=Error(error)
+			    errorFunction(error);
+			    return;
+	  	    }
+		    readFile(path.join(this.cwd,stylesheet+".sef"), (ex, data) => {
+                _this.debug && this.debug({label:"generateAndGetSEF readFile",stylesheet:stylesheet,error:(ex?ex.message:null)})
+		    	if (ex) {
+                    errorFunction(ex.message)
+                 }  else done(data)
+		    })
+        });
+    }catch (ex) {
+        errorFunction(ex.message)
+    }
+    return this
+}
+saxonEngine.prototype.setDebug = function(debug=console.log){
+    this.debug=debug
+    return this
+}
+saxonEngine.prototype.setDebugOff = function(){
+    delete this.debug
+    return this
 }
 saxonEngine.prototype.xsltToSEF = function(stylesheet,xslt,done,errorFunction=errorFunctionBase){
     const _this=this
@@ -57,26 +103,18 @@ saxonEngine.prototype.xsltToSEF = function(stylesheet,xslt,done,errorFunction=er
         } else errorFunction("xsl exists")
 
     });
+    return this
 }
-/*
-saxonEngine.prototype.xsltToSEF = function(stylesheet,xslt,done,errorFunction=errorFunctionBase){
-    const _this=this
-    if(stylesheet==null) throw Error("not style sheet specified")
-    const file=path.join(this.cwd,stylesheet+".xslt")
-    access(file, constants.F_OK, function(err) { 
-        if(err) _this.xslToSEFforce(stylesheet,xslt,done,errorFunction=errorFunctionBase)
-        else errorFunction("xsl exists for "+stylesheet)
-    });
-}
-*/
+
 saxonEngine.prototype.xslToSEFforce = function(stylesheet,xslt,done,errorFunction=errorFunctionBase){
     const _this=this
+    if(!errorFunction) throw Error("xslToSEFforce no error call back")
     const file=path.join(this.cwd,stylesheet+".xslt")
     writeFile(file,xslt,{encoding:'utf8',flag:'w'},(err)=>{
         if(err) errorFunction(err)
-//        else _this.getSEF(stylesheet,done,errorFunction)
         else _this.generateAndGetSEF(stylesheet,done,errorFunction)
     })
+    return this
 }
 saxonEngine.prototype.xsltToSEFForce=saxonEngine.prototype.xslToSEFforce 
 saxonEngine.prototype.xsltFileNameToStylesheet = (stylesheet)=>stylesheet.replace(/(\\|\/)/gm, ".")
@@ -86,16 +124,8 @@ saxonEngine.prototype.xsltFileToSEF = function(stylesheet,done,errorFunction=err
 		if (err) errorFunction(err)
         else _this.xsltToSEFForce(_this.xsltFileNameToStylesheet(stylesheet),data,done,errorFunction)
 	});
+    return this
 }
-/*
-saxonEngine.prototype.xsltToSEFForce = function(stylesheet,xslt,done,errorFunction=errorFunctionBase){
-    const _this=this
-	readFile(path.join(this.cwd,stylesheet+".sef"), (err, data) => {
-		if (err) _this.getSEF(stylesheet,done,errorFunction)
-        else errorFunction("SEF already exits")
-	});
-}
-*/
 saxonEngine.prototype.transform = function(xmlString,stylesheet,params,done,errorFunction=errorFunctionBase) {
     const xml= xmlString.startsWith("<")?xmlString:"<data>"+xmlString+"</data>"
     if(this.cache.hasOwnProperty(stylesheet)) {
@@ -112,12 +142,26 @@ saxonEngine.prototype.transform = function(xmlString,stylesheet,params,done,erro
     this.debug && this.debug({label:"transform new",stylesheet:stylesheet})
     const _this=this
     readFile(path.join(this.cwd,stylesheet+".sef"), (err, data) => {
-        if (err) _this.getSEF(stylesheet,
-            (sef)=>_this.transformNew(xml,stylesheet,data,params,done,errorFunction),
-            errorFunction
-            )
+        if (err) {
+            this.debug && this.debug({label:"transform not SEF file",stylesheet:stylesheet})
+            readFile(path.join(this.cwd,stylesheet+".xslt"), (err, data) => {
+                if (err) _this.getSEF(stylesheet,
+                    (sef)=>_this.transformNew(xml,stylesheet,data,params,done,errorFunction),
+                    errorFunction
+                    )
+                else {
+                    this.debug && this.debug({label:"transform xslt file generateAndGetSEF",stylesheet:stylesheet})
+                    _this.generateAndGetSEF(stylesheet,
+                        (sef)=>_this.transformNew(xml,stylesheet,sef,params,done,errorFunction),
+                        errorFunction
+                    )
+                }
+            });
+ 
+        } 
         else this.transformNew(xml,stylesheet,data,params,done,errorFunction)
     });
+    return this
 }
 saxonEngine.prototype.transformNew = function(xml,stylesheet,sef,params,done,errorFunction=errorFunctionBase) {
     this.debug && this.debug({label:"transformNew",stylesheet:stylesheet})
@@ -129,10 +173,13 @@ saxonEngine.prototype.transformNew = function(xml,stylesheet,sef,params,done,err
             stylesheetParams:params
           })
         if(resultStringXML.stylesheetInternal) this.cache[stylesheet]=resultStringXML.stylesheetInternal
+        else this.debug && this.debug({label:"transformNew",stylesheet:stylesheet,warning:"no stylesheetInternal"})
         done&&done(resultStringXML.principalResult)
         return resultStringXML.principalResult        
     } catch (ex) {
-        errorFunction
+        if(errorFunction) errorFunction(ex.message)
+        else throw ex
     }
+    return this
 }
 module.exports = saxonEngine
