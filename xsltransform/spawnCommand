@@ -16,12 +16,12 @@ function spawnCommand(command,options,done) {
             result+=data;
         });
         child.on('close', function(code) {
-            console.log({label:"spawnCommand",command:command,result:result,code:code})
+//            console.log({label:"spawnCommand",command:command,result:result,code:code})
             if(code==0) done(null, result,null)
             else done(result, null, result)
         });
     } catch(ex) {
-        console.log({label:"spawnCommand",command:command,error:ex.message})
+//        console.log({label:"spawnCommand",command:command,error:ex.message})
         done(null, ex.message,null)
     }
 }
