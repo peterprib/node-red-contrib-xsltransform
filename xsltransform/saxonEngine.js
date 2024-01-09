@@ -1,13 +1,14 @@
 const path = require('path');
 const { transform } = require('saxon-js')
-//const { execFile } = require('node:child_process');
+const { platform } = require('node:process');
 const spawnCommand=require('./spawnCommand')
 const { access, constants, copyFile, readdir, readFile, rm, writeFile } = require('node:fs');
 const errorFunctionBase = (reason)=>{throw Error(reason)}
 
 function saxonEngine(arg,debug) {
-    Object.assign(this,{cwd:"tmp",xslDir:path.join(__dirname,"..",'xsl')},arg)
-    this.tmpDir=path.join(__dirname,"..",this.cwd)
+    this.baseDir = platform=="win32"? path.join(__dirname,"..") :__dirname
+    Object.assign(this,{cwd:"tmp",xslDir:path.join(this.baseDir,'xsl')},arg)
+    this.tmpDir=path.join(this.baseDir,this.cwd)
     this.cache={}
     return this
 }
