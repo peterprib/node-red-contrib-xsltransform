@@ -6,11 +6,10 @@ const { access, constants, copyFile, mkdirSync, readdir, readFile, rm, writeFile
 const errorFunctionBase = (reason)=>{throw Error(reason)}
 
 function saxonEngine(arg,debug) {
+    this.baseDir = path.join(__dirname,"..")
     if(platform=="win32"){
-        this.baseDir = path.join(__dirname,"..")
         this.tmpDir=path.join(this.baseDir,"tmp")
     } else {
-        this.baseDir = __dirname
         this.tmpDir="/tmp/saxonengine"
         try{
             mkdirSync(this.tmpDir);
