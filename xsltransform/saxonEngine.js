@@ -49,7 +49,7 @@ saxonEngine.prototype.getSEF = function(stylesheet,done,errorFunction=errorFunct
     const xslFile=path.join(this.cwd,stylesheet+".xslt")
     copyFile(path.join(_this.xslDir,stylesheet+".xsl"),xslFile, // constants.COPYFILE_EXCL,
         (ex)=>{
-            this.debug && this.debug({label:"getSEF copyfile",error:err})
+            this.debug && this.debug({label:"getSEF copyfile",error:ex.message})
             if(ex /*&& ex.code!=='EEXIST'*/) errorFunction(ex.message)
             else _this.generateAndGetSEF(stylesheet,done,errorFunction)
         }
@@ -143,7 +143,7 @@ saxonEngine.prototype.transform = function(xmlString,stylesheet,params,done,erro
     const _this=this
     readFile(path.join(this.cwd,stylesheet+".sef"), (err, data) => {
         if (err) {
-            this.debug && this.debug({label:"transform not SEF file",stylesheet:stylesheet})
+            this.debug && this.debug({label:"transform no SEF file",stylesheet:stylesheet})
             readFile(path.join(this.cwd,stylesheet+".xslt"), (err, data) => {
                 if (err) _this.getSEF(stylesheet,
                     (sef)=>_this.transformNew(xml,stylesheet,data,params,done,errorFunction),

@@ -1,22 +1,26 @@
 //const { spawn } = require('node:child_process');
 const spawn = require('cross-spawn');
 function spawnCommand(command,options,done) {
-    const child = spawn(command,options)
-    let result = ""
-    child.stdout.setEncoding('utf8');
-    child.stdout.on('data', function(data) {
-         result+=data.toString();
-    });
-    child.stderr.setEncoding('utf8');
-    child.stderr.on('data', function(data) {
- //       console.log({error:data})
-        result+=data;
-    });
-    child.on('close', function(code) {
-        console.log({code:code})
-        if(code==0) done(null, result,null)
-        else done(result, null, result)
-    });
+    try{
+        const child = spawn(command,options)
+        let result = ""
+        child.stdout.setEncoding('utf8');
+        child.stdout.on('data', function(data) {
+             result+=data.toString();
+        });
+        child.stderr.setEncoding('utf8');
+        child.stderr.on('data', function(data) {
+     //       console.log({error:data})
+            result+=data;
+        });
+        child.on('close', function(code) {
+//            console.log({code:code})
+            if(code==0) done(null, result,null)
+            else done(result, null, result)
+        });
+    } catch(ex) {
+        done(null, ex.message,null)
+    }
 }
 
 module.exports = spawnCommand
