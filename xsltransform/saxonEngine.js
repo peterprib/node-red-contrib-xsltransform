@@ -7,18 +7,18 @@ const errorFunctionBase = (reason)=>{throw Error(reason)}
 
 function saxonEngine(arg,debug) {
     Object.assign(this,{cwd:"tmp",xslDir:path.join('.','xsl')},arg)
-//    this.tmpDir=path.join('.',this.cwd)
+    this.tmpDir=path.join('.',this.cwd)
     this.cache={}
     return this
 }
 saxonEngine.prototype.clearCache = function(done,errorFunction=errorFunctionBase){
     const _this=this
     this.cache={}
-	readdir(this.cwd,(err,files)=>{
+	readdir(this.tmpDir,(err,files)=>{
         _this.debug&&_this.debug({label:"clearCache",error:err,files:files})
         let fileCount=files.length,errors=[]
         files.forEach(fileName=>{
-            const file=path.join(_this.cwd,fileName)
+            const file=path.join(_this.tmpDir,fileName)
             rm(file,ex=>{
                 _this.debug&&_this.debug({label:"clearCache rm ",file:file,error:ex?ex.message:null})
                 if(ex) {
@@ -34,9 +34,9 @@ saxonEngine.prototype.clearCache = function(done,errorFunction=errorFunctionBase
 saxonEngine.prototype.removeCache = function(stylesheet,done,errorFunction=errorFunctionBase){
     this.debug && this.debug({label:"removeCache",stylesheet:stylesheet})
     delete this.cache[stylesheet]
-    const xslFile=path.join(this.cwd,stylesheet+".xslt")
+    const xslFile=path.join(this.tmpDir,stylesheet+".xslt")
     rm(xslFile,(exXsl)=>{
-        const selFile=path.join(this.cwd,stylesheet+".sef")
+        const selFile=path.join(this.tmpDir,stylesheet+".sef")
         rm(xslFile,(exSEF)=>{
             if((exXsl && exXsl.code !=="ENOENT") || (exSEF && exSEF.code!=="ENOENT")) errorFunction(exXsl?exXsl.message:"" + exSEF?" "+ exSEF.message:"")
             else done()
@@ -46,7 +46,7 @@ saxonEngine.prototype.removeCache = function(stylesheet,done,errorFunction=error
 }
 saxonEngine.prototype.getSEF = function(stylesheet,done,errorFunction=errorFunctionBase){
     const _this=this
-    const xslFile=path.join(this.cwd,stylesheet+".xslt")
+    const xslFile=path.join(this.tmpDir,stylesheet+".xslt")
     copyFile(path.join(_this.xslDir,stylesheet+".xsl"),xslFile, // constants.COPYFILE_EXCL,
         (ex)=>{
             this.debug && this.debug({label:"getSEF copyfile",error:ex.message})
@@ -71,7 +71,7 @@ saxonEngine.prototype.generateAndGetSEF = function(stylesheet,done,errorFunction
 			    errorFunction(error);
 			    return;
 	  	    }
-		    readFile(path.join(this.cwd,stylesheet+".sef"), (ex, data) => {
+		    readFile(path.join(this.tmpDir,stylesheet+".sef"), (ex, data) => {
                 _this.debug && this.debug({label:"generateAndGetSEF readFile",stylesheet:stylesheet,error:(ex?ex.message:null)})
 		    	if (ex) {
                     errorFunction(ex.message)
@@ -93,7 +93,7 @@ saxonEngine.prototype.setDebugOff = function(){
 }
 saxonEngine.prototype.xsltToSEF = function(stylesheet,xslt,done,errorFunction=errorFunctionBase){
     const _this=this
-    const file=path.join(this.cwd,stylesheet+".xslt")
+    const file=path.join(this.tmpDir,stylesheet+".xslt")
     access(file, constants.F_OK, (err)=>{ 
         if(err) {
             writeFile(file,xslt,{encoding:'utf8',flag:'w'},(err)=>{
@@ -109,7 +109,7 @@ saxonEngine.prototype.xsltToSEF = function(stylesheet,xslt,done,errorFunction=er
 saxonEngine.prototype.xslToSEFforce = function(stylesheet,xslt,done,errorFunction=errorFunctionBase){
     const _this=this
     if(!errorFunction) throw Error("xslToSEFforce no error call back")
-    const file=path.join(this.cwd,stylesheet+".xslt")
+    const file=path.join(this.tmpDir,stylesheet+".xslt")
     writeFile(file,xslt,{encoding:'utf8',flag:'w'},(err)=>{
         if(err) errorFunction(err)
         else _this.generateAndGetSEF(stylesheet,done,errorFunction)
@@ -141,10 +141,10 @@ saxonEngine.prototype.transform = function(xmlString,stylesheet,params,done,erro
     }
     this.debug && this.debug({label:"transform new",stylesheet:stylesheet})
     const _this=this
-    readFile(path.join(this.cwd,stylesheet+".sef"), (err, data) => {
+    readFile(path.join(this.tmpDir,stylesheet+".sef"), (err, data) => {
         if (err) {
             this.debug && this.debug({label:"transform no SEF file",stylesheet:stylesheet})
-            readFile(path.join(this.cwd,stylesheet+".xslt"), (err, data) => {
+            readFile(path.join(this.tmpDir,stylesheet+".xslt"), (err, data) => {
                 if (err) _this.getSEF(stylesheet,
                     (sef)=>_this.transformNew(xml,stylesheet,data,params,done,errorFunction),
                     errorFunction
