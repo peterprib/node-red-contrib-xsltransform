@@ -75,7 +75,7 @@ saxonEngine.prototype.generateAndGetSEF = function(stylesheet,done,errorFunction
     try{
         spawnCommand(command,
 //	    exec(command,
-            {cwd:this.cwd}, (error, stdout, stderr) => {
+            {cwd:this.cwd,shell: true}, (error, stdout, stderr) => {
             _this.debug && _this.debug({label:"generateAndGetSEF",stylesheet:stylesheet,command:command
                 ,error:error,stdout:stdout, stderr:stderr})
 		    if (error) {
