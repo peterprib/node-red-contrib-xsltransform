@@ -96,6 +96,9 @@ saxonEngine.prototype.generateAndGetSEF = function(stylesheet,done,errorFunction
     }
     return this
 }
+saxonEngine.prototype.getTempDir = function(){
+    return this.tmpDir
+}
 saxonEngine.prototype.setDebug = function(debug=console.log){
     this.debug=debug
     return this

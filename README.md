@@ -47,7 +47,7 @@ Test/example flow in  test/testflow.json
 
 ## Version
 
-0.5.9 rewrite for saxon.js compile method not available.  Changed caching to internal oblect 
+0.5.20 rewrite for saxon.js compile method not available.  Changed caching to internalsaxon oblect 
 
 0.4.0 Add pulldown for supplied transforms 
 
