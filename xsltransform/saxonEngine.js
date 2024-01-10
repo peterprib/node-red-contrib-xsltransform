@@ -69,7 +69,7 @@ saxonEngine.prototype.getSEF = function(stylesheet,done,errorFunction=errorFunct
 saxonEngine.prototype.generateAndGetSEF = function(stylesheet,done,errorFunction){
     this.debug && this.debug({label:"generateAndGetSEF",stylesheet:stylesheet})
     const _this=this
-   	const command = "xslt3 -xsl:"+stylesheet+".xslt -export:"+stylesheet+".sef -nogo -t"
+   	const command = "npx xslt3 -xsl:"+stylesheet+".xslt -export:"+stylesheet+".sef -nogo -t"
     if(!errorFunction) throw Error("generateAndGetSEF no error call back")
     try{
         spawnCommand(command,

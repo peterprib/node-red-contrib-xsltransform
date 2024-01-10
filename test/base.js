@@ -45,7 +45,7 @@ function test(xml,xsl){
 
 describe("saxon", function() {
 	it("compile ", function(done) {
-		saxonEngine.getSEF("formatxml",(sef)=>done(sef?null:"missing SEF output"))
+		saxonEngine.getSEF("formatxml",(sef)=>done(sef?null:"missing SEF output"),done)
 	});
 	it("removeCache ", function(done) {
 		saxonEngine.removeCache("formatxml",done,done)
@@ -57,15 +57,24 @@ describe("saxon", function() {
 
 	});
 	it("compile inline", function(done) {
-		readFile(path.join('xsl','formatxml.xsl'), (err, data) => {
-			if (err) done(err)
-			else {
+		readFile(path.join('xsl','formatxml.xsl'), (ex, data) => {
+			if (ex) {
+				console.error("readFile "+ex.message)
+				done(ex)
+			} else {
+				console.log("readFile ok")
 				const SEFFile=path.join(cwd,'testInline.xslt')
 				saxonEngine.xslToSEFforce("testInline",data,
-					()=>access(SEFFile, constants.F_OK, (ex)=>done(ex?ex.message:null)),
-					done,
+					()=>{
+						console.log("readFile xslToSEFforce")
+						access(SEFFile, constants.F_OK,
+							(ex)=>{
+								console.log("access "+(ex?ex.message:"ok"))
+								done(ex?ex.message:null)
+						})
+					},
+					done
 				)
-				
 			}
 		})
 	});

@@ -3,6 +3,7 @@ const assert = require('node:assert').strict;
 const fs=require('fs');
 const helper=require("node-red-node-test-helper");
 const transformNode = require("../xsltransform/xsltransform.js");
+const saxonEngine = require('../xsltransform/saxonEngine.js');
 const outHelper={id :"outHelper",type :"helper"}
 helper.init(require.resolve('node-red'));
 
@@ -38,7 +39,7 @@ function test(label,node,dataFile,repeat=1){
 		} catch(ex) {
 			done(ex);
 		}
-	}).timeout(repeat>1?500*repeat:2000);
+	}).timeout(repeat>1?500*repeat:3000);
 }
 function buildNode(xsl) {
 	return {
