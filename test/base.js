@@ -13,28 +13,28 @@ if(platform!=="win32") {
 	const spawnCommand=require('../xsltransform/spawnCommand')
 	describe("Spawn Enviroment", function() {
 		it("pwd", function(done) {
-			spawnCommand("pwd",{shell: true},
+			spawnCommand("pwd",[],{shell: true},
 				(error, stdout, stderr) => {
 					console.log({label:"spawn",error:error,stdout:stdout,stderr:stderr})
 				}
 			)
 		});
 		it("pwd +cwd", function(done) {
-			spawnCommand("pwd",{cwd:"tmp",shell: true},
+			spawnCommand("pwd",[],{cwd:"tmp",shell: true},
 				(error, stdout, stderr) => {
 					console.log({label:"spawn",error:error,stdout:stdout,stderr:stderr})
 				}
 			)
 		});
 		it("find xslt3", function(done) {
-			spawnCommand('find / -name "xslt3"',{shell: true},
+			spawnCommand('find',['/ -name "xslt3"'],{shell: true},
 				(error, stdout, stderr) => {
 					console.log({label:"spawn",error:error,stdout:stdout,stderr:stderr})
 				}
 			)
 		});
 		it("find npx", function(done) {
-			spawnCommand('find / -name "npx"',{shell: true},
+			spawnCommand('find',["/", '"-name "npx"'],{shell: true},
 				(error, stdout, stderr) => {
 					console.log({label:"spawn",error:error,stdout:stdout,stderr:stderr})
 				}

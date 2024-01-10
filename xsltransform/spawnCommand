@@ -1,9 +1,9 @@
 //const { spawn } = require('node:child_process');
 const spawn = require('cross-spawn');
-function spawnCommand(command,options,done) {
+function spawnCommand(command,cmdargs,options,done) {
     try{
 //        console.log({label:"spawnCommand"})
-        const child = spawn(command,options).on('error', (ex) => {
+        const child = spawn(command,cmdargs,options).on('error', (ex) => {
 //          console.log({label:"spawnCommand onError",command:command,error:ex.message})
             done( ex.message,null,ex.message)
         });

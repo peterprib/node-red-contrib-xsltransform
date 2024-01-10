@@ -70,10 +70,10 @@ saxonEngine.prototype.generateAndGetSEF = function(stylesheet,done,errorFunction
     this.debug && this.debug({label:"generateAndGetSEF",stylesheet:stylesheet})
     const _this=this
     const baseFile=path.join(this.tmpDir,stylesheet)
-   	const command = "npx xslt3 -xsl:"+baseFile+".xslt -export:"+baseFile+".sef -nogo -t"
+   	const command = "xslt3 -xsl:"+baseFile+".xslt -export:"+baseFile+".sef -nogo -t"
     if(!errorFunction) throw Error("generateAndGetSEF no error call back")
     try{
-        spawnCommand(command,
+        spawnCommand("npx",[command],
 //	    exec(command,
             {cwd:this.cwd,shell: true}, (error, stdout, stderr) => {
             _this.debug && _this.debug({label:"generateAndGetSEF",stylesheet:stylesheet,command:command
