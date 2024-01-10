@@ -59,9 +59,9 @@ function test(xml,xsl){
 
 describe("saxon", function() {
 	it("compile ", function(done) {
-		saxonEngine.setDebug()
+//		saxonEngine.setDebug()
 		saxonEngine.getSEF("formatxml",(sef)=>done(sef?null:"missing SEF output"),done)
-		saxonEngine.setDebug()
+//		saxonEngine.setDebug()
 });
 	it("removeCache ", function(done) {
 		saxonEngine.removeCache("formatxml",done,done)

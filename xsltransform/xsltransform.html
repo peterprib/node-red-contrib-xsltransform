@@ -173,7 +173,7 @@
 				})	
         },
         oneditsave: function() {
-            $("#node-input-xsl").val(this.editor.getValue());
+            this.xsl=this.editor.getValue()
             this.editor.destroy();
             delete this.editor;
         },

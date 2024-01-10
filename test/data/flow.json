@@ -7,6 +7,14 @@
         "info": ""
     },
     {
+        "id": "95abaf47013a42df",
+        "type": "tab",
+        "label": "inline tests",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
         "id": "167526d6.1dcd09",
         "type": "debug",
         "z": "d5868481.df2b68",
@@ -72,6 +80,7 @@
         "z": "d5868481.df2b68",
         "name": "xslTransform",
         "param": "",
+        "xslFile": "",
         "xsl": "<?xml version=\"1.0\"?>\n<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\n<xsl:output method=\"text\"/>\n\n<xsl:template match=\"/\">{\n    <xsl:apply-templates select=\"*\"/>}\n</xsl:template>\n\n<!-- Object or Element Property-->\n<xsl:template match=\"*\">\n    \"<xsl:value-of select=\"name()\"/>\" :<xsl:call-template name=\"Properties\">\n        <xsl:with-param name=\"parent\" select=\"'Yes'\"> </xsl:with-param>\n    </xsl:call-template>\n</xsl:template>\n\n<!-- Array Element -->\n<xsl:template match=\"*\" mode=\"ArrayElement\">\n    <xsl:call-template name=\"Properties\"/>\n</xsl:template>\n\n<!-- Object Properties -->\n<xsl:template name=\"Properties\">\n    <xsl:param name=\"parent\"></xsl:param>\n    <xsl:variable name=\"childName\" select=\"name(*[1])\"/>\n    <xsl:choose>            \n        <xsl:when test=\"not(*|@*)\"><xsl:choose><xsl:when test=\"$parent='Yes'\"> <xsl:text>&quot;</xsl:text><xsl:value-of select=\".\"/><xsl:text>&quot;</xsl:text></xsl:when>\n                <xsl:otherwise>\"<xsl:value-of select=\"name()\"/>\":\"<xsl:value-of  select=\".\"/>\"</xsl:otherwise>\n            </xsl:choose>           \n        </xsl:when>                \n        <xsl:when test=\"count(*[name()=$childName]) > 1\">{ \"<xsl:value-of  select=\"$childName\"/>\" :[<xsl:apply-templates select=\"*\" mode=\"ArrayElement\"/>] }</xsl:when>\n        <xsl:otherwise>{\n            <xsl:apply-templates select=\"@*\"/>\n            <xsl:apply-templates select=\"*\"/>\n            }</xsl:otherwise>\n    </xsl:choose>\n    <xsl:if test=\"following-sibling::*\">,</xsl:if>\n</xsl:template>\n\n<!-- Attribute Property -->\n<xsl:template match=\"@*\">\"<xsl:value-of select=\"name()\"/>\" : \"<xsl:value-of select=\".\"/>\",\n</xsl:template>\n</xsl:stylesheet>",
         "x": 430,
         "y": 200,
@@ -86,6 +95,15 @@
         "type": "inject",
         "z": "d5868481.df2b68",
         "name": "topic \"formatxmTest\" ",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
         "repeat": "",
         "crontab": "",
         "once": false,
@@ -106,6 +124,15 @@
         "type": "inject",
         "z": "d5868481.df2b68",
         "name": "topic formatxml",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
         "repeat": "",
         "crontab": "",
         "once": false,
@@ -171,5 +198,208 @@
         "x": 680,
         "y": 260,
         "wires": []
+    },
+    {
+        "id": "23c3b4c57d226b42",
+        "type": "xslTransform",
+        "z": "d5868481.df2b68",
+        "name": "",
+        "param": "{}",
+        "xslFile": "removerEmptyNodes",
+        "xsl": "",
+        "x": 430,
+        "y": 340,
+        "wires": [
+            [
+                "167526d6.1dcd09"
+            ]
+        ]
+    },
+    {
+        "id": "26d8b00217299850",
+        "type": "inject",
+        "z": "d5868481.df2b68",
+        "name": "topic formatxml",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "formatxml",
+        "payload": "<a><b>a test</b><c></c></a>",
+        "payloadType": "str",
+        "x": 120,
+        "y": 340,
+        "wires": [
+            [
+                "23c3b4c57d226b42"
+            ]
+        ]
+    },
+    {
+        "id": "b91083c0702dd0d8",
+        "type": "xslTransform",
+        "z": "d5868481.df2b68",
+        "name": "",
+        "param": "{}",
+        "xslFile": "removerEmptyNodes",
+        "xsl": "",
+        "x": 430,
+        "y": 420,
+        "wires": [
+            [
+                "167526d6.1dcd09"
+            ]
+        ]
+    },
+    {
+        "id": "c22683777a524547",
+        "type": "inject",
+        "z": "d5868481.df2b68",
+        "name": "topic formatxml",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "formatxml",
+        "payload": "<a><b>a test</b><c></c></a>",
+        "payloadType": "str",
+        "x": 140,
+        "y": 420,
+        "wires": [
+            [
+                "b91083c0702dd0d8"
+            ]
+        ]
+    },
+    {
+        "id": "5d034983d7ea6026",
+        "type": "xslTransform",
+        "z": "95abaf47013a42df",
+        "name": "",
+        "param": "{}",
+        "xslFile": "",
+        "xsl": "",
+        "x": 410,
+        "y": 160,
+        "wires": [
+            [
+                "042c978d686af087"
+            ]
+        ]
+    },
+    {
+        "id": "e4fa6a9d4bc25525",
+        "type": "inject",
+        "z": "95abaf47013a42df",
+        "name": "topic \"formatxmTest\" ",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "inline test",
+        "payload": "<a><b>inline test</b></a>",
+        "payloadType": "str",
+        "x": 170,
+        "y": 160,
+        "wires": [
+            [
+                "5d034983d7ea6026",
+                "c7b44b8bff852446",
+                "984583931c0dbeca"
+            ]
+        ]
+    },
+    {
+        "id": "042c978d686af087",
+        "type": "debug",
+        "z": "95abaf47013a42df",
+        "name": "errors",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 710,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "c7b44b8bff852446",
+        "type": "xslTransform",
+        "z": "95abaf47013a42df",
+        "name": "",
+        "param": "{}",
+        "xslFile": "",
+        "xsl": "aa",
+        "x": 410,
+        "y": 240,
+        "wires": [
+            [
+                "042c978d686af087"
+            ]
+        ]
+    },
+    {
+        "id": "b77799271ddf79cc",
+        "type": "debug",
+        "z": "95abaf47013a42df",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 710,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "984583931c0dbeca",
+        "type": "xslTransform",
+        "z": "95abaf47013a42df",
+        "name": "good",
+        "param": "{}",
+        "xslFile": "",
+        "xsl": "<?xml version=\"1.0\"?>\r\n<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">\r\n<xsl:output method=\"text\"/>\r\n\r\n<xsl:template match=\"/\">{\r\n    <xsl:apply-templates select=\"*\"/>}\r\n</xsl:template>\r\n\r\n<!-- Object or Element Property-->\r\n<xsl:template match=\"*\">\r\n    \"<xsl:value-of select=\"name()\"/>\" :<xsl:call-template name=\"Properties\">\r\n        <xsl:with-param name=\"parent\" select=\"'Yes'\"> </xsl:with-param>\r\n    </xsl:call-template>\r\n</xsl:template>\r\n\r\n<!-- Array Element -->\r\n<xsl:template match=\"*\" mode=\"ArrayElement\">\r\n    <xsl:call-template name=\"Properties\"/>\r\n</xsl:template>\r\n\r\n<!-- Object Properties -->\r\n<xsl:template name=\"Properties\">\r\n    <xsl:param name=\"parent\"></xsl:param>\r\n    <xsl:variable name=\"childName\" select=\"name(*[1])\"/>\r\n    <xsl:choose>            \r\n        <xsl:when test=\"not(*|@*)\"><xsl:choose><xsl:when test=\"$parent='Yes'\"> <xsl:text>&quot;</xsl:text><xsl:value-of select=\".\"/><xsl:text>&quot;</xsl:text></xsl:when>\r\n                <xsl:otherwise>\"<xsl:value-of select=\"name()\"/>\":\"<xsl:value-of  select=\".\"/>\"</xsl:otherwise>\r\n            </xsl:choose>           \r\n        </xsl:when>                \r\n        <xsl:when test=\"count(*[name()=$childName]) > 1\">{ \"<xsl:value-of  select=\"$childName\"/>\" :[<xsl:apply-templates select=\"*\" mode=\"ArrayElement\"/>] }</xsl:when>\r\n        <xsl:otherwise>{\r\n            <xsl:apply-templates select=\"@*\"/>\r\n            <xsl:apply-templates select=\"*\"/>\r\n            }</xsl:otherwise>\r\n    </xsl:choose>\r\n    <xsl:if test=\"following-sibling::*\">,</xsl:if>\r\n</xsl:template>\r\n\r\n<!-- Attribute Property -->\r\n<xsl:template match=\"@*\">\"<xsl:value-of select=\"name()\"/>\" : \"<xsl:value-of select=\".\"/>\",\r\n</xsl:template>\r\n</xsl:stylesheet>",
+        "x": 390,
+        "y": 320,
+        "wires": [
+            [
+                "b77799271ddf79cc"
+            ]
+        ]
     }
 ]

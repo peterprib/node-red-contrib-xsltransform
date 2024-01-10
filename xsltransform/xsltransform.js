@@ -1,12 +1,14 @@
 const logger=new (require("node-red-contrib-logger"))("xslTransform");
 logger.sendInfo("Copyright 2022 Jaroslav Peter Prib");
+const { setEngine } = require("crypto");
 const SaxonEngine=require('../xsltransform/saxonEngine')
 const { error } = require("console");
 const saxonEngine=new SaxonEngine();
-saxonEngine.setDebug()
+//saxonEngine.setDebug()
 const statusOK=function(){this.status({fill:"green",shape:"ring",text:"ready"})};
 const statusError=function(message){
 	this.log(message)
+	logger.sendErrorAndStackDump("failed build",Error(message))
 	this.status({fill:"red",shape:"ring",text:"failed build "+message});
 }
 
@@ -58,12 +60,20 @@ module.exports=function (RED) {
         node.status({fill:"yellow",shape:"ring",text:"preparing"});
 		try{
 			if(node.xslFile) {
+				if(logger.active) logger.send({label:"xslFile",stylesheet:node.xslFile});
 				node.stylesheet = saxonEngine.xsltFileNameToStylesheet(node.xslFile)
-				saxonEngine.xsltFileToSEF(node.xslFile,statusOK.bind(node),statusError.bind(node))
+				saxonEngine.getSEF(node.stylesheet,statusOK.bind(node),
+					()=>{
+						if(logger.active) logger.send({label:"xslFile getSEF",stylesheet:node.stylesheet});
+						saxonEngine.xsltFileToSEF(node.xslFile,statusOK.bind(node),statusError.bind(node))
+					}
+				)
 			} else if(node.xsl && node.xsl.startsWith("<")) {
+				if(logger.active) logger.send({label:"xsl inline",styleshet:node.id,});
 				node.stylesheet=node.id
 				saxonEngine.xsltToSEFForce(node.stylesheet,node.xsl,statusOK.bind(node),statusError.bind(node))
         	} else {
+				if(logger.active) logger.send({label:"xsl deferred prep",stylesheet:node.xsl,});
 				node.status({fill:"yellow",shape:"ring",text:"Deferred prepare"});
 				node.deferredPrepare=true
 				node.stylesheet=node.xsl
