@@ -10,6 +10,7 @@ const { access, constants, readdirSync, readFile, readFileSync, writeFileSync } 
 const cwd= "tmp" //cwd=current working directory
 
 if(platform!=="win32") {
+	const spawnCommand=require('./spawnCommand')
 	describe("Spawn Enviroment", function() {
 		it("pwd", function(done) {
 			spawnCommand("pwd",{},
