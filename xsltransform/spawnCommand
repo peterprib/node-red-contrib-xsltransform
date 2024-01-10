@@ -3,9 +3,9 @@ const spawn = require('cross-spawn');
 function spawnCommand(command,options,done) {
     try{
 //        console.log({label:"spawnCommand"})
-        const child = spawn(command,options).on('error', (error) => {
-//        console.log({label:"spawnCommand onError",command:command,error:ex.message})
-        done(null, ex.message,null)
+        const child = spawn(command,options).on('error', (ex) => {
+//          console.log({label:"spawnCommand onError",command:command,error:ex.message})
+            done(null, ex.message,null)
         });
         let result = ""
         child.stdout.setEncoding('utf8');
