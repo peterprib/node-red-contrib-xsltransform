@@ -1,5 +1,6 @@
 'use strict';
 const assert=require('assert');
+const { platform } = require('node:process');
 const SaxonEngine=require('../xsltransform/saxonEngine')
 const saxonEngine=new SaxonEngine();
 const path=require('path');
@@ -8,6 +9,45 @@ const { exec } = require('node:child_process');
 const { access, constants, readdirSync, readFile, readFileSync, writeFileSync } = require('node:fs');
 const cwd= "tmp" //cwd=current working directory
 
+if(platform!=="win32") {
+	describe("Spawn Enviroment", function() {
+		it("pwd", function(done) {
+			spawnCommand("pwd",{},
+				(error, stdout, stderr) => {
+					console.log({label:"spawn",error:error,stdout:stdout,stderr:stderr})
+				}
+			)
+		});
+		it("pwd +cwd", function(done) {
+			spawnCommand("pwd",{cwd:"tmp"},
+				(error, stdout, stderr) => {
+					console.log({label:"spawn",error:error,stdout:stdout,stderr:stderr})
+				}
+			)
+		});
+		it("find xslt3", function(done) {
+			spawnCommand('find / -name "xslt3"',{},
+				(error, stdout, stderr) => {
+					console.log({label:"spawn",error:error,stdout:stdout,stderr:stderr})
+				}
+			)
+		});
+		it("find npx", function(done) {
+			spawnCommand('find / -name "npx"',{},
+				(error, stdout, stderr) => {
+					console.log({label:"spawn",error:error,stdout:stdout,stderr:stderr})
+				}
+			)
+		});
+		it("env", function(done) {
+			spawnCommand('env',{},
+				(error, stdout, stderr) => {
+					console.log({label:"spawn",error:error,stdout:stdout,stderr:stderr})
+				}
+			)
+		});
+	});
+}
 function transform(xml,sef,params) {
 	const resultStringXML = saxon.transform({
 	  stylesheetText: sef,
