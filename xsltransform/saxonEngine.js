@@ -17,7 +17,7 @@ function saxonEngine(arg,debug) {
             if(ex.code !== "EEXIST") throw ex
         }
     }
-    Object.assign(this,{cwd:"tmp",xslDir:path.join(this.baseDir,'xsl')},arg)
+    Object.assign(this,{cwd:this.tmpDir,xslDir:path.join(this.baseDir,'xsl')},arg)
     this.cache={}
     return this
 }
