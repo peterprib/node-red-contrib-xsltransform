@@ -5,7 +5,7 @@ function spawnCommand(command,options,done) {
 //        console.log({label:"spawnCommand"})
         const child = spawn(command,options).on('error', (ex) => {
 //          console.log({label:"spawnCommand onError",command:command,error:ex.message})
-            done(null, ex.message,null)
+            done( ex.message,null,ex.message)
         });
         let result = ""
         child.stdout.setEncoding('utf8');
@@ -25,7 +25,7 @@ function spawnCommand(command,options,done) {
         });
     } catch(ex) {
 //        console.log({label:"spawnCommand",command:command,error:ex.message})
-        done(null, ex.message,null)
+        done( ex.message,null,ex.message)
     }
 }
 
