@@ -56,14 +56,18 @@ saxonEngine.prototype.removeCache = function(stylesheet,done,errorFunction=error
 }
 saxonEngine.prototype.getSEF = function(stylesheet,done,errorFunction=errorFunctionBase){
     const _this=this
-    const xslFile=path.join(this.tmpDir,stylesheet+".xslt")
-    copyFile(path.join(_this.xslDir,stylesheet+".xsl"),xslFile, // constants.COPYFILE_EXCL,
-        (ex)=>{
-            this.debug && this.debug({label:"getSEF copyfile",error:ex.message})
-            if(ex /*&& ex.code!=='EEXIST'*/) errorFunction(ex.message)
-            else _this.generateAndGetSEF(stylesheet,done,errorFunction)
-        }
-    )
+    try{
+        const xslFile=path.join(this.tmpDir,stylesheet+".xslt")
+        copyFile(path.join(this.xslDir,stylesheet+".xsl"),xslFile, // constants.COPYFILE_EXCL,
+            (ex)=>{
+                _this.debug && _this.debug({label:"getSEF copyfile",error:ex?ex.message:null})
+                if(ex /*&& ex.code!=='EEXIST'*/) errorFunction(ex.message)
+                else _this.generateAndGetSEF(stylesheet,done,errorFunction)
+            }
+        )
+    } catch(ex) {
+        this.debug && _this.debug({label:"getSEF copyfile",error:ex.message})
+    }
     return this
 }
 saxonEngine.prototype.generateAndGetSEF = function(stylesheet,done,errorFunction){
