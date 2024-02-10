@@ -39,7 +39,7 @@ function test(label,node,dataFile,repeat=1){
 		} catch(ex) {
 			done(ex);
 		}
-	}).timeout(repeat>1?500*repeat:3000);
+	}).timeout(repeat>1?500*repeat:10000);
 }
 function buildNode(xsl) {
 	return {

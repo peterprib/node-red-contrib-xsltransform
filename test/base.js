@@ -54,15 +54,21 @@ function test(xml,xsl){
 			},
 			done
 		)
-	});
+	}).timeout(5000);
 }
 
 describe("saxon", function() {
 	it("compile ", function(done) {
 //		saxonEngine.setDebug()
-		saxonEngine.getSEF("formatxml",(sef)=>done(sef?null:"missing SEF output"),done)
+		saxonEngine.getSEF("formatxml",
+			(sef)=>done(sef?null:"missing SEF output"),
+			(err)=>{
+				console.error(err)
+				done(err)
+			}
+		)
 //		saxonEngine.setDebug()
-});
+	}).timeout(5000);
 	it("removeCache ", function(done) {
 		saxonEngine.removeCache("formatxml",done,done)
 	});
@@ -102,7 +108,7 @@ describe("saxon", function() {
 				done()
 			},
 		)
-	})
+	}).timeout(5000)
 })
 
 

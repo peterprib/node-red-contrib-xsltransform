@@ -1,6 +1,7 @@
 const logger=new (require("node-red-contrib-logger"))("xslTransform");
 logger.sendInfo("Copyright 2022 Jaroslav Peter Prib");
 const { setEngine } = require("crypto");
+const path = require('path');
 const SaxonEngine=require('../xsltransform/saxonEngine')
 const { error } = require("console");
 const saxonEngine=new SaxonEngine();
@@ -65,7 +66,7 @@ module.exports=function (RED) {
 				saxonEngine.getSEF(node.stylesheet,statusOK.bind(node),
 					()=>{
 						if(logger.active) logger.send({label:"xslFile getSEF",stylesheet:node.stylesheet});
-						saxonEngine.xsltFileToSEF(node.xslFile,statusOK.bind(node),statusError.bind(node))
+						saxonEngine.xsltFileToSEF(path.join("xsl",node.xslFile+".xsl"),statusOK.bind(node),statusError.bind(node))
 					}
 				)
 			} else if(node.xsl && node.xsl.startsWith("<")) {

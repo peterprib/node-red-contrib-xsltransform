@@ -5,19 +5,20 @@ const spawnCommand=require('./spawnCommand')
 const { access, constants, copyFile, mkdirSync, readdir, readFile, rm, writeFile } = require('node:fs');
 const errorFunctionBase = (reason)=>{throw Error(reason)}
 
-function saxonEngine(arg,debug) {
+function saxonEngine(arg,debug=false) {
     this.baseDir = path.join(__dirname,"..")
     if(platform=="win32"){
         this.tmpDir=path.join(this.baseDir,"tmp")
+        
     } else {
         this.tmpDir="/tmp/saxonengine"
-        try{
-            mkdirSync(this.tmpDir);
-        } catch(ex) {
-            if(ex.code !== "EEXIST") throw ex
-        }
     }
-    Object.assign(this,{cwd:this.tmpDir,xslDir:path.join(this.baseDir,'xsl')},arg)
+    try{
+        mkdirSync(this.tmpDir);
+    } catch(ex) {
+    if(ex.code !== "EEXIST") throw ex
+}
+Object.assign(this,{cwd:this.tmpDir,xslDir:path.join(this.baseDir,'xsl')},arg)
     this.cache={}
     return this
 }
