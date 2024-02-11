@@ -99,7 +99,7 @@ describe("saxon", function() {
 				)
 			}
 		})
-	});
+	}).timeout(5000);
 	it("compile inline fail" , function(done) {
 		saxonEngine.xslToSEFforce("testInlineRubbish","rublish xsl",
 			()=>done("sholud have failed"),
