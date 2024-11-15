@@ -4,10 +4,11 @@
   "description": "Node-RED node node to tranform xml content using saxon-js.",
   "main": "xsltransform.js",
   "dependencies": {
+    "cross-spawn": "*",
     "node-red-contrib-logger": "*",
+    "node-red-contrib-xsltransform": "file:",
     "saxon-js": "*",
-    "xslt3": "*",
-    "cross-spawn":"*"
+    "xslt3": "*"
   },
   "devDependencies": {
     "axios": ">=0.21.2",
@@ -22,7 +23,7 @@
     "test": "mocha \"test/b*.js\"",
     "startNodeRed": "node-red --userDir ./.temp --title '***test***' --setting ./test/data/settings.js ./test/data/flow.json",
     "link": "cd ./.temp ; npm link ../",
-    "update":"npm update"
+    "update": "npm update"
   },
   "repository": {
     "type": "git",
